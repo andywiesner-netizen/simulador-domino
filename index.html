@@ -2,42 +2,43 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Simulador de Dominó PRO - Motor Táctil Nativo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.4, maximum-scale=5.0, user-scalable=yes">
+    <title>Simulador de Dominó PRO - Móvil</title>
 
     <style>
         /* --- ESTILOS VISUALES Y LAYOUT --- */
         body {
             margin: 0; background-color: #1a5310; font-family: 'Segoe UI', sans-serif;
             min-height: 100vh; display: grid;
-            grid-template-columns: 120px 1fr 120px; 
-            grid-template-rows: 90px 1fr 90px;
+            /* Redujimos el grosor de las orillas para dar más espacio a la mesa central */
+            grid-template-columns: 90px 1fr 90px; 
+            grid-template-rows: 80px 1fr 80px;
             grid-template-areas: ". north ." "west mesa east" ". south .";
-            overflow: auto; /* Permite scroll y zoom libre */
+            overflow: auto; 
         }
 
-        #controles { position: absolute; top: 5px; left: 5px; z-index: 20; max-width: 65%; display: flex; flex-direction: column; gap: 5px; }
-        .botones-wrap { display: flex; gap: 5px; flex-wrap: wrap; }
+        #controles { position: absolute; top: 5px; left: 5px; z-index: 20; max-width: 65%; display: flex; flex-direction: column; gap: 4px; }
+        .botones-wrap { display: flex; gap: 4px; flex-wrap: wrap; }
         
         #texto-ayuda {
-            font-size: 11px; color: #fff; background: rgba(0, 0, 0, 0.7);
-            padding: 4px 8px; border-radius: 4px; border-left: 3px solid #ff9800;
+            font-size: 10px; color: #fff; background: rgba(0, 0, 0, 0.7);
+            padding: 3px 6px; border-radius: 4px; border-left: 3px solid #ff9800;
             font-weight: bold; transition: opacity 0.3s; opacity: 0;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;
         }
         
         #tablero-puntuacion {
             position: absolute; top: 5px; right: 5px; z-index: 20;
-            background: #222; color: white; padding: 5px 10px; border-radius: 8px;
+            background: #222; color: white; padding: 4px 8px; border-radius: 8px;
             border: 2px solid gold; font-weight: bold; text-align: center;
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.5); font-size: 12px;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.5); font-size: 11px;
         }
         .puntos-equipo { margin: 2px 0; }
-        .puntos-equipo span { color: gold; font-size: 16px; }
+        .puntos-equipo span { color: gold; font-size: 14px; }
 
         button {
-            background-color: #ff9800; color: white; border: none; padding: 6px 10px;
-            font-size: 12px; font-weight: bold; border-radius: 5px; cursor: pointer; box-shadow: 1px 1px 5px rgba(0,0,0,0.5);
+            background-color: #ff9800; color: white; border: none; padding: 5px 8px;
+            font-size: 11px; font-weight: bold; border-radius: 5px; cursor: pointer; box-shadow: 1px 1px 4px rgba(0,0,0,0.5);
         }
         .btn-secundario { background-color: #2196F3; }
         #btn-deshacer { background-color: #9c27b0; } 
@@ -51,70 +52,63 @@
 
         #info-juego {
             position: absolute; top: 5px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); color: white; padding: 5px 15px; border-radius: 20px;
-            font-size: 13px; font-weight: bold; pointer-events: none; z-index: 10; text-align: center; white-space: nowrap;
+            background: rgba(0,0,0,0.8); color: white; padding: 4px 12px; border-radius: 20px;
+            font-size: 12px; font-weight: bold; pointer-events: none; z-index: 10; text-align: center; white-space: nowrap;
         }
 
-        .zona-mano { display: flex; justify-content: center; align-items: center; gap: 3px; padding: 3px; background-color: rgba(0, 0, 0, 0.2); position: relative; flex-wrap: wrap; }
+        .zona-mano { display: flex; justify-content: center; align-items: center; gap: 2px; padding: 2px; background-color: rgba(0, 0, 0, 0.2); position: relative; flex-wrap: wrap; }
         .zona-mano.turno-activo { background-color: rgba(255, 215, 0, 0.3); box-shadow: inset 0 0 15px rgba(255, 215, 0, 0.8); border-color: gold !important; }
 
         #mano-sur { grid-area: south; border-top: 2px solid rgba(255,255,255,0.2); }
         #mano-norte { grid-area: north; border-bottom: 2px solid rgba(255,255,255,0.2); }
-        #mano-oeste { grid-area: west; flex-direction: row; border-right: 2px solid rgba(255,255,255,0.2); align-content: center; }
-        #mano-este { grid-area: east; flex-direction: row; border-left: 2px solid rgba(255,255,255,0.2); align-content: center; }
+        /* Las manos laterales usan columna para apilarse hacia abajo */
+        #mano-oeste { grid-area: west; flex-direction: column; border-right: 2px solid rgba(255,255,255,0.2); align-content: center; }
+        #mano-este { grid-area: east; flex-direction: column; border-left: 2px solid rgba(255,255,255,0.2); align-content: center; }
         
-        .etiqueta-jugador { position: absolute; color: rgba(255,255,255,0.8); font-size: 10px; font-weight: bold; text-transform: uppercase; z-index: 0; pointer-events: none; }
+        .etiqueta-jugador { position: absolute; color: rgba(255,255,255,0.8); font-size: 9px; font-weight: bold; text-transform: uppercase; z-index: 0; pointer-events: none; }
 
-        /* --- FICHAS --- */
+        /* --- FICHAS (Reducidas un 20% para ajustarse al móvil) --- */
         .ficha {
-            width: 32px; height: 64px; background-color: white; border-radius: 5px;
-            box-shadow: 1px 1px 4px rgba(0,0,0,0.5); display: flex; flex-direction: column;
+            width: 26px; height: 52px; background-color: white; border-radius: 4px;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.5); display: flex; flex-direction: column;
             border: 1px solid #bbb; user-select: none; transition: transform 0.1s, box-shadow 0.1s;
             z-index: 1; cursor: grab; 
-            
-            /* Bloquea gestos del navegador SOLO en la ficha */
-            touch-action: none; 
-            -webkit-user-select: none; 
-            -webkit-touch-callout: none;
+            touch-action: none !important; -webkit-user-select: none; -webkit-touch-callout: none;
         }
         
-        .ficha:hover { transform: translateY(-5px); box-shadow: 2px 5px 10px rgba(0,0,0,0.5); }
-        #mano-este .ficha, #mano-oeste .ficha { width: 64px; height: 32px; flex-direction: row; margin: 2px;}
+        .ficha:active { transform: scale(1.15); box-shadow: 0px 0px 10px gold; z-index: 50; }
+        
+        /* Fichas Este/Oeste */
+        #mano-este .ficha, #mano-oeste .ficha { width: 52px; height: 26px; flex-direction: row; margin: 1px;}
         #mano-este .linea-divisoria, #mano-oeste .linea-divisoria { width: 1px; height: 85%; margin: auto 0; }
         
-        /* Efecto clon cuando se arrastra con el nuevo motor */
-        .ficha-clone {
-            position: fixed !important;
-            z-index: 9999 !important;
-            opacity: 0.9;
-            transform: scale(1.15);
-            pointer-events: none !important; /* Para que el dedo lea lo que hay debajo */
-            box-shadow: 2px 5px 15px rgba(0,0,0,0.8);
-        }
+        .ficha-clone { position: fixed !important; z-index: 9999 !important; opacity: 0.9; transform: scale(1.15); pointer-events: none !important; box-shadow: 2px 5px 15px rgba(0,0,0,0.8); }
         
-        #mesa .ficha { width: 60px; height: 30px; flex-direction: row; cursor: default; flex-shrink: 0; margin: 0; }
-        #mesa .ficha:hover { transform: none; box-shadow: 1px 1px 4px rgba(0,0,0,0.5); }
+        /* Fichas en la mesa */
+        #mesa .ficha { width: 50px; height: 25px; flex-direction: row; cursor: default; flex-shrink: 0; margin: 0; }
+        #mesa .ficha:hover { transform: none; box-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
         #mesa .linea-divisoria { width: 1px; height: 85%; margin: auto 0; }
-        #mesa .ficha.doble { flex-direction: column; width: 30px; height: 60px; margin-top: -15px; }
+        #mesa .ficha.doble { flex-direction: column; width: 25px; height: 50px; margin-top: -12.5px; }
         #mesa .ficha.doble .linea-divisoria { height: 1px; width: 85%; margin: 0 auto; }
         
         .mitad { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 1px; pointer-events: none; }
         .linea-divisoria { height: 1px; background-color: black; width: 85%; margin: 0 auto; pointer-events: none; }
-        .punto { width: 4px; height: 4px; background-color: #000; border-radius: 50%; justify-self: center; align-self: center; pointer-events: none; }
+        /* Puntos reducidos */
+        .punto { width: 3px; height: 3px; background-color: #000; border-radius: 50%; justify-self: center; align-self: center; pointer-events: none; }
 
         /* --- MODALES --- */
         .modal-fondo { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center; }
-        .modal-contenido { background: #222; color: white; padding: 15px; border-radius: 10px; text-align: center; border: 2px solid gold; width: 80%; max-width: 400px; max-height: 80vh; overflow-y: auto;}
+        .modal-contenido { background: #222; color: white; padding: 15px; border-radius: 10px; text-align: center; border: 2px solid gold; width: 85%; max-width: 350px; max-height: 80vh; overflow-y: auto;}
         .modal-botones { display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
-        .btn-decision { background: #277714; font-size: 14px; padding: 10px; color: white; border: none; border-radius: 5px; flex: 1;}
+        .btn-decision { background: #277714; font-size: 13px; padding: 8px; color: white; border: none; border-radius: 5px; flex: 1;}
 
         #lista-ejercicios { list-style: none; padding: 0; margin: 10px 0; }
-        #lista-ejercicios li { background: #333; padding: 8px; margin-bottom: 5px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; text-align: left; font-size: 14px;}
+        #lista-ejercicios li { background: #333; padding: 8px; margin-bottom: 5px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; text-align: left; font-size: 13px;}
         .btn-borrar-ejercicio { background: transparent; color: #ff5252; padding: 2px; font-size: 14px; box-shadow: none; }
         
-        .barra-prob { width: 100%; height: 20px; background: #555; border-radius: 10px; overflow: hidden; display: flex; margin-top: 10px;}
-        .barra-nosotros { background: lime; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: black;}
-        .barra-ellos { background: red; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: white;}
+        .barra-prob { width: 100%; height: 15px; background: #555; border-radius: 8px; overflow: hidden; display: flex; margin-top: 10px;}
+        .barra-nosotros { background: lime; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; color: black;}
+        .barra-ellos { background: red; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; color: white;}
         .barra-empate { background: gray; height: 100%; }
     </style>
 </head>
@@ -141,7 +135,7 @@
 
     <div id="modal-decision" class="modal-fondo">
         <div class="modal-contenido">
-            <h4>Calza en ambos extremos</h4>
+            <h4 style="margin-top:0;">Calza en ambos extremos</h4>
             <div class="modal-botones">
                 <button class="btn-decision" id="btn-izq">Izquierda</button>
                 <button class="btn-decision" id="btn-der">Derecha</button>
@@ -151,7 +145,7 @@
     
     <div id="modal-cargar" class="modal-fondo">
         <div class="modal-contenido">
-            <h3>Secuencias Guardadas</h3>
+            <h3 style="margin-top:0;">Secuencias Guardadas</h3>
             <ul id="lista-ejercicios"></ul>
             <div class="modal-botones">
                 <button class="btn-decision" onclick="document.getElementById('modal-cargar').style.display='none'" style="background: #555;">Cerrar</button>
@@ -161,16 +155,16 @@
     
     <div id="modal-simulacion" class="modal-fondo">
         <div class="modal-contenido">
-            <h3 style="margin-top:0;">📊 Probabilidades de Victoria</h3>
-            <p style="font-size: 12px; color: #aaa;">Basado en 1,000 partidas simuladas al azar desde este punto.</p>
-            <div style="text-align: left; font-size: 14px; margin-top: 15px;">
+            <h3 style="margin-top:0;">📊 Probabilidades</h3>
+            <p style="font-size: 11px; color: #aaa; margin-bottom: 5px;">Basado en 1,000 simulaciones al azar.</p>
+            <div style="text-align: left; font-size: 13px; margin-top: 10px;">
                 🟢 <strong>Nosotros (S-N):</strong> <span id="sim-nosotros">0</span>%<br>
                 🔴 <strong>Ellos (E-O):</strong> <span id="sim-ellos">0</span>%<br>
-                ⚪ <strong>Empates (Tranca):</strong> <span id="sim-empates">0</span>%
+                ⚪ <strong>Empates:</strong> <span id="sim-empates">0</span>%
             </div>
             <div class="barra-prob" id="barra-visual"></div>
             <div class="modal-botones">
-                <button class="btn-decision" onclick="document.getElementById('modal-simulacion').style.display='none'">Cerrar Análisis</button>
+                <button class="btn-decision" onclick="document.getElementById('modal-simulacion').style.display='none'">Cerrar</button>
             </div>
         </div>
     </div>
@@ -183,7 +177,7 @@
 
     <script>
         // =====================================================================
-        // MOTOR DE ARRASTRE NATIVO (REEMPLAZA AL DRAG & DROP DE HTML5)
+        // MOTOR DE ARRASTRE NATIVO
         // =====================================================================
         let activeTile = null;
         let cloneTile = null;
@@ -204,30 +198,27 @@
             }
             lastTapTime = currentTime;
 
-            // Si está en la mesa, no se arrastra
             if (tile.parentElement.id === 'mesa') return;
 
-            e.preventDefault(); // Evita scroll o zoom accidental al tocar la ficha
+            e.preventDefault(); 
             
             activeTile = tile;
             const rect = activeTile.getBoundingClientRect();
             offsetX = e.clientX - rect.left;
             offsetY = e.clientY - rect.top;
 
-            // Crear el CLON visual
             cloneTile = activeTile.cloneNode(true);
             cloneTile.classList.add('ficha-clone');
             cloneTile.style.left = rect.left + 'px';
             cloneTile.style.top = rect.top + 'px';
             document.body.appendChild(cloneTile);
 
-            // Ocultar original parcialmente
             activeTile.style.opacity = '0.3';
         }
 
         function handlePointerMove(e) {
             if (!cloneTile) return;
-            e.preventDefault(); // Bloquea scroll mientras arrastras
+            e.preventDefault(); 
             cloneTile.style.left = (e.clientX - offsetX) + 'px';
             cloneTile.style.top = (e.clientY - offsetY) + 'px';
         }
@@ -235,7 +226,6 @@
         function handlePointerUp(e) {
             if (!cloneTile || !activeTile) return;
 
-            // Esconder clon para ver qué hay debajo del dedo
             cloneTile.style.display = 'none';
             const dropTarget = document.elementFromPoint(e.clientX, e.clientY);
             
@@ -243,10 +233,8 @@
             const manoTarget = dropTarget ? dropTarget.closest('.zona-mano') : null;
 
             if (mesaTarget) {
-                // Soltado en la mesa
                 intentarJugarFicha(activeTile);
             } else if (manoTarget) {
-                // Soltado en una mano (Reordenar)
                 const esVert = manoTarget.id === 'mano-este' || manoTarget.id === 'mano-oeste';
                 const fArrastrables = [...manoTarget.querySelectorAll('.ficha:not([style*="opacity: 0.3"])')];
                 
@@ -260,7 +248,6 @@
                 if (despuesDeElemento == null) manoTarget.appendChild(activeTile);
                 else manoTarget.insertBefore(activeTile, despuesDeElemento);
 
-                // Validar si el cambio de mano forzó un pase
                 if (juegoIniciado && !juegoTerminado) {
                     if (!verificarVictoria()) {
                         const jugId = ordenJugadores[indiceTurnoActual];
@@ -272,21 +259,19 @@
                 }
             }
 
-            // Limpieza
             cloneTile.remove();
             cloneTile = null;
             if(activeTile) activeTile.style.opacity = '1';
             activeTile = null;
         }
 
-        // Asignar eventos de puntero (Unifican Mouse y Táctil)
         document.addEventListener('pointerdown', handlePointerDown, { passive: false });
         document.addEventListener('pointermove', handlePointerMove, { passive: false });
         document.addEventListener('pointerup', handlePointerUp);
-        document.addEventListener('pointercancel', handlePointerUp); // Por si se interrumpe el toque
+        document.addEventListener('pointercancel', handlePointerUp); 
 
         // =====================================================================
-        // RESTO DEL CÓDIGO DEL JUEGO (Lógica, Reglas, Interfaz, Simulación)
+        // RESTO DEL CÓDIGO DEL JUEGO
         // =====================================================================
 
         let timerAyuda;
@@ -307,12 +292,7 @@
             if (!juegoIniciado || juegoTerminado) { alert("La simulación solo funciona durante una partida activa."); return; }
             const ITERACIONES = 1000; let victoriasUs = 0; let victoriasThem = 0; let empates = 0;
             let manosBases = [[], [], [], []];
-            
-            ordenJugadores.forEach((id, idx) => { 
-                document.getElementById(id).querySelectorAll('.ficha').forEach(f => { 
-                    manosBases[idx].push({ v1: parseInt(f.dataset.v1), v2: parseInt(f.dataset.v2) }); 
-                }); 
-            });
+            ordenJugadores.forEach((id, idx) => { document.getElementById(id).querySelectorAll('.ficha').forEach(f => { manosBases[idx].push({ v1: parseInt(f.dataset.v1), v2: parseInt(f.dataset.v2) }); }); });
 
             for (let i = 0; i < ITERACIONES; i++) {
                 let extIzq = extremoIzquierdo; let extDer = extremoDerecho; let turnoAct = indiceTurnoActual; let pases = pasesConsecutivos;
@@ -330,12 +310,8 @@
                     if (jugadasValidas.length > 0) {
                         pases = 0; let elegida = jugadasValidas[Math.floor(Math.random() * jugadasValidas.length)];
                         manosSim[turnoAct].splice(elegida.index, 1);
-                        if (manosSim[turnoAct].length === 0) { 
-                            if (turnoAct === 0 || turnoAct === 2) victoriasUs++; else victoriasThem++; 
-                            simTerminada = true; break; 
-                        }
-                        if (elegida.lado === 'izq') { extIzq = (elegida.f.v1 === extIzq) ? elegida.f.v2 : elegida.f.v1; } 
-                        else { extDer = (elegida.f.v2 === extDer) ? elegida.f.v1 : elegida.f.v2; }
+                        if (manosSim[turnoAct].length === 0) { if (turnoAct === 0 || turnoAct === 2) victoriasUs++; else victoriasThem++; simTerminada = true; break; }
+                        if (elegida.lado === 'izq') { extIzq = (elegida.f.v1 === extIzq) ? elegida.f.v2 : elegida.f.v1; } else { extDer = (elegida.f.v2 === extDer) ? elegida.f.v1 : elegida.f.v2; }
                     } else {
                         pases++;
                         if (pases >= 4) {
@@ -485,7 +461,6 @@
         function crearFichaVisual(arriba, abajo, idUnico) {
             const ficha = document.createElement('div'); ficha.className = 'ficha'; ficha.id = idUnico;
             ficha.dataset.v1 = arriba; ficha.dataset.v2 = abajo;
-            
             const m1 = document.createElement('div'); m1.className = 'mitad m1'; dibujarMitad(m1, arriba);
             const linea = document.createElement('div'); linea.className = 'linea-divisoria';
             const m2 = document.createElement('div'); m2.className = 'mitad m2'; dibujarMitad(m2, abajo);
@@ -502,7 +477,7 @@
         function iniciarMano() {
             document.querySelectorAll('.ficha').forEach(f => f.remove()); ordenJugadores.forEach(id => document.getElementById(id).classList.remove('turno-activo'));
             juegoIniciado = false; juegoTerminado = false; extremoIzquierdo = null; extremoDerecho = null; indiceTurnoActual = -1; pasesConsecutivos = 0; historialJugadas = []; 
-            actualizarBotonesControl(); actualizarMarcadorInfo("Arrastra o haz doble toque");
+            actualizarBotonesControl(); actualizarMarcadorInfo("Arrastre libre o Doble Toque");
             let todasLasFichas = []; for (let i = 0; i <= 6; i++) { for (let j = i; j <= 6; j++) { todasLasFichas.push([i, j]); } }
             for (let i = todasLasFichas.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [todasLasFichas[i], todasLasFichas[j]] = [todasLasFichas[j], todasLasFichas[i]]; }
             const manos = { 'mano-sur': todasLasFichas.splice(0, 7), 'mano-este': todasLasFichas.splice(0, 7), 'mano-norte': todasLasFichas.splice(0, 7), 'mano-oeste': todasLasFichas.splice(0, 7) };

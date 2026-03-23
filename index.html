@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Simulador de Dominó PRO - Móvil</title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/default.css">
@@ -12,6 +12,7 @@
         /* --- ESTILOS VISUALES Y LAYOUT --- */
         body {
             margin: 0; background-color: #1a5310; font-family: 'Segoe UI', sans-serif;
+            /* Eliminamos overflow: hidden y height:100vh rígido para permitir ZOOM y SCROLL libre */
             min-height: 100vh; display: grid;
             grid-template-columns: 120px 1fr 120px; 
             grid-template-rows: 90px 1fr 90px;
@@ -74,7 +75,10 @@
             box-shadow: 1px 1px 4px rgba(0,0,0,0.5); display: flex; flex-direction: column;
             border: 1px solid #bbb; user-select: none; transition: transform 0.2s, box-shadow 0.2s;
             z-index: 1; cursor: pointer; 
-            touch-action: none !important; -webkit-user-select: none; -webkit-touch-callout: none;
+            /* Reglas táctiles críticas para móviles */
+            touch-action: none !important; 
+            -webkit-user-select: none; 
+            -webkit-touch-callout: none;
         }
         
         .ficha:hover { transform: translateY(-5px); box-shadow: 2px 5px 10px rgba(0,0,0,0.5); }
@@ -83,8 +87,13 @@
         
         .ficha.dragging { opacity: 0.4; }
         
-        /* CORRECCIÓN CRÍTICA PARA SOLTAR EN MÓVILES */
-        .dnd-poly-drag-image { opacity: 0.7 !important; transform: scale(1.2) !important; pointer-events: none !important; z-index: 9999 !important; }
+        /* Imagen "fantasma" que sigues con el dedo. DEBE ser intocable para poder soltarla. */
+        .dnd-poly-drag-image { 
+            opacity: 0.7 !important; 
+            transform: scale(1.2) !important; 
+            pointer-events: none !important; 
+            z-index: 9999 !important; 
+        }
         
         #mesa .ficha { width: 60px; height: 30px; flex-direction: row; cursor: default; flex-shrink: 0; margin: 0; }
         #mesa .ficha:hover { transform: none; box-shadow: 1px 1px 4px rgba(0,0,0,0.5); }
@@ -176,17 +185,14 @@
     <div id="mano-sur" class="zona-mano"><div class="etiqueta-jugador" style="bottom: 2px;">Sur</div></div>
 
     <script>
-        // Configuración del Polyfill Táctil
+        // --- INICIALIZACIÓN TÁCTIL EXACTA Y LIMPIA ---
         MobileDragDrop.polyfill({ 
-            holdToDrag: 250
+            // Eliminamos el retraso de "mantener presionado". Arrastre instantáneo.
+            dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride 
         });
 
-        // Previene el scroll SOLO si tocas una ficha
-        window.addEventListener('touchmove', function(event) { 
-            if(event.target.closest('.ficha')) {
-                event.preventDefault(); 
-            }
-        }, {passive: false});
+        // Este código es requerido por iOS/Safari para permitir el arrastre
+        window.addEventListener('touchmove', function() {}, {passive: false});
 
         // --- SISTEMA DE AYUDA (TOOLTIPS) ---
         let timerAyuda;
@@ -557,199 +563,4 @@
             indiceTurnoActual = (indiceTurnoActual + 1) % 4; 
             const nuevoTurnoId = ordenJugadores[indiceTurnoActual];
             
-            document.getElementById(nuevoTurnoId).classList.add('turno-activo'); 
-            actualizarMarcador();
-            
-            if (!tieneJugadaValida(nuevoTurnoId)) { 
-                pasesConsecutivos++; 
-                setTimeout(() => { alert(`Jugador ${nuevoTurnoId.replace('mano-', '')} pasa.`); avanzarTurno(); }, 500); 
-            } else { 
-                pasesConsecutivos = 0; 
-            }
-        }
-
-        function tieneJugadaValida(idMano) {
-            const fichas = document.getElementById(idMano).querySelectorAll('.ficha');
-            for (let f of fichas) { 
-                let v1 = parseInt(f.dataset.v1), v2 = parseInt(f.dataset.v2); 
-                if (v1 === extremoIzquierdo || v2 === extremoIzquierdo || v1 === extremoDerecho || v2 === extremoDerecho) return true; 
-            } 
-            return false;
-        }
-
-        function dibujarMitad(contenedor, valor) {
-            contenedor.innerHTML = ''; 
-            const puntos = posicionesPuntos[valor];
-            for (let i = 0; i < 9; i++) { 
-                const celda = document.createElement('div'); 
-                if (puntos.includes(i)) { 
-                    const p = document.createElement('div'); p.className = 'punto'; celda.appendChild(p); 
-                } 
-                contenedor.appendChild(celda); 
-            }
-        }
-
-        function crearFichaVisual(arriba, abajo, idUnico) {
-            const ficha = document.createElement('div'); 
-            ficha.className = 'ficha'; 
-            ficha.id = idUnico;
-            ficha.dataset.v1 = arriba; 
-            ficha.dataset.v2 = abajo; 
-            ficha.draggable = true;
-            
-            ficha.addEventListener('dragstart', (e) => { 
-                if (ficha.parentElement.id === 'mesa') { e.preventDefault(); return; } 
-                ficha.classList.add('dragging'); 
-                e.dataTransfer.setData('text/plain', ficha.id); 
-            });
-            ficha.addEventListener('dragend', () => {
-                ficha.classList.remove('dragging'); 
-            });
-            ficha.addEventListener('dblclick', () => { 
-                if (ficha.draggable) intentarJugarFicha(ficha); 
-            });
-            
-            const m1 = document.createElement('div'); m1.className = 'mitad m1'; dibujarMitad(m1, arriba);
-            const linea = document.createElement('div'); linea.className = 'linea-divisoria';
-            const m2 = document.createElement('div'); m2.className = 'mitad m2'; dibujarMitad(m2, abajo);
-            
-            ficha.appendChild(m1); ficha.appendChild(linea); ficha.appendChild(m2); 
-            return ficha;
-        }
-
-        // --- MANEJO DE LA MESA Y ARRASTRE ---
-        const mesa = document.getElementById('mesa');
-        
-        mesa.addEventListener('dragover', (e) => { 
-            e.preventDefault(); 
-            mesa.classList.add('drag-over'); 
-        });
-        
-        mesa.addEventListener('dragleave', (e) => { 
-            mesa.classList.remove('drag-over'); 
-        });
-        
-        mesa.addEventListener('drop', (e) => { 
-            e.preventDefault(); 
-            mesa.classList.remove('drag-over'); 
-            const idFicha = e.dataTransfer.getData('text/plain');
-            if (idFicha) {
-                const ficha = document.getElementById(idFicha); 
-                if (ficha) intentarJugarFicha(ficha); 
-            }
-        });
-
-        document.querySelectorAll('.zona-mano').forEach(zona => {
-            zona.addEventListener('dragover', e => { 
-                e.preventDefault(); 
-                zona.classList.add('drag-over-mano'); 
-            });
-            zona.addEventListener('dragleave', e => { 
-                zona.classList.remove('drag-over-mano'); 
-            });
-            zona.addEventListener('drop', e => {
-                e.preventDefault(); 
-                zona.classList.remove('drag-over-mano');
-                
-                const idFicha = e.dataTransfer.getData('text/plain');
-                if (!idFicha) return;
-                
-                const ficha = document.getElementById(idFicha); 
-                if (!ficha || ficha.parentElement.id === 'mesa') return;
-                
-                const esVert = zona.id === 'mano-este' || zona.id === 'mano-oeste'; 
-                const fArrastrables = [...zona.querySelectorAll('.ficha:not(.dragging)')];
-                
-                const despuesDeElemento = fArrastrables.reduce((masCercano, hijo) => {
-                    const caja = hijo.getBoundingClientRect(); 
-                    let dist = esVert ? (e.clientY - caja.top - caja.height / 2) : (e.clientX - caja.left - caja.width / 2);
-                    if (dist < 0 && dist > masCercano.dist) return { dist: dist, elemento: hijo }; 
-                    else return masCercano;
-                }, { dist: Number.NEGATIVE_INFINITY }).elemento;
-                
-                if (despuesDeElemento == null) {
-                    zona.appendChild(ficha); 
-                } else {
-                    zona.insertBefore(ficha, despuesDeElemento);
-                }
-                
-                if (juegoIniciado && !juegoTerminado) {
-                    if (verificarVictoria()) return; 
-                    const jugId = ordenJugadores[indiceTurnoActual];
-                    if (!tieneJugadaValida(jugId)) { 
-                        pasesConsecutivos++; 
-                        setTimeout(() => { alert(`Pasa por cambio de fichas.`); avanzarTurno(); }, 400); 
-                    }
-                }
-            });
-        });
-
-        document.getElementById('btn-izq').addEventListener('click', () => { 
-            document.getElementById('modal-decision').style.display = 'none'; 
-            intentarJugarFicha(fichaEnEspera, 'izq'); 
-            fichaEnEspera = null; 
-        });
-        document.getElementById('btn-der').addEventListener('click', () => { 
-            document.getElementById('modal-decision').style.display = 'none'; 
-            intentarJugarFicha(fichaEnEspera, 'der'); 
-            fichaEnEspera = null; 
-        });
-
-        function actualizarMarcador() { 
-            if (juegoIniciado && !juegoTerminado) { 
-                const nombreTurno = ordenJugadores[indiceTurnoActual].replace('mano-', '').toUpperCase(); 
-                document.getElementById('info-juego').innerHTML = `[ ${extremoIzquierdo} ] y [ ${extremoDerecho} ] | <span style="color: gold;">Turno: ${nombreTurno}</span>`; 
-            } 
-        }
-        
-        function actualizarMarcadorInfo(texto) { 
-            document.getElementById('info-juego').innerHTML = texto; 
-        }
-        
-        function generarIdFichaOriginal(i) { 
-            return `f_${i}_${Math.random().toString(36).substr(2, 9)}`; 
-        }
-
-        function iniciarMano() {
-            document.querySelectorAll('.ficha').forEach(f => f.remove()); 
-            ordenJugadores.forEach(id => document.getElementById(id).classList.remove('turno-activo'));
-            
-            juegoIniciado = false; juegoTerminado = false; extremoIzquierdo = null; extremoDerecho = null; 
-            indiceTurnoActual = -1; pasesConsecutivos = 0; historialJugadas = []; 
-            actualizarBotonesControl(); 
-            actualizarMarcadorInfo("Mantén presionada la ficha o haz doble toque");
-            
-            let todasLasFichas = []; 
-            for (let i = 0; i <= 6; i++) { for (let j = i; j <= 6; j++) { todasLasFichas.push([i, j]); } }
-            
-            for (let i = todasLasFichas.length - 1; i > 0; i--) { 
-                const j = Math.floor(Math.random() * (i + 1)); 
-                [todasLasFichas[i], todasLasFichas[j]] = [todasLasFichas[j], todasLasFichas[i]]; 
-            }
-            
-            const manos = { 
-                'mano-sur': todasLasFichas.splice(0, 7), 'mano-este': todasLasFichas.splice(0, 7), 
-                'mano-norte': todasLasFichas.splice(0, 7), 'mano-oeste': todasLasFichas.splice(0, 7) 
-            };
-            
-            let fIndex = 0; 
-            for (let id in manos) { 
-                const contenedor = document.getElementById(id); 
-                manos[id].forEach((f) => { 
-                    contenedor.appendChild(crearFichaVisual(f[0], f[1], generarIdFichaOriginal(fIndex++))); 
-                }); 
-            }
-        }
-
-        function reiniciarPartidaCompleta() { 
-            if (confirm("¿Borrar puntos?")) { 
-                puntosNosotros = 0; puntosEllos = 0; 
-                actualizarTableroPuntos(); iniciarMano(); 
-            } 
-        }
-
-        iniciarMano();
-
-    </script>
-</body>
-</html>
+            document.getElementById(nuevoTurnoId).classList.add('turno-activo');

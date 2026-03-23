@@ -2,22 +2,26 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.4, maximum-scale=5.0, user-scalable=yes">
-    <title>Simulador de Dominó PRO - Móvil</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Simulador de Dominó PRO - Diseño Vertical</title>
 
     <style>
         /* --- ESTILOS VISUALES Y LAYOUT --- */
         body {
             margin: 0; background-color: #1a5310; font-family: 'Segoe UI', sans-serif;
-            min-height: 100vh; display: grid;
-            /* Redujimos el grosor de las orillas para dar más espacio a la mesa central */
-            grid-template-columns: 90px 1fr 90px; 
-            grid-template-rows: 80px 1fr 80px;
-            grid-template-areas: ". north ." "west mesa east" ". south .";
-            overflow: auto; 
+            min-height: 100vh; display: flex; flex-direction: column;
+            overflow: auto; /* Permite scroll y zoom libre */
         }
 
-        #controles { position: absolute; top: 5px; left: 5px; z-index: 20; max-width: 65%; display: flex; flex-direction: column; gap: 4px; }
+        /* --- NUEVO: BARRA SUPERIOR AISLADA --- */
+        #barra-superior {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            background-color: rgba(0, 0, 0, 0.5); padding: 6px 10px;
+            flex-wrap: wrap; gap: 10px; z-index: 20;
+            border-bottom: 2px solid gold;
+        }
+
+        #controles { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 220px; }
         .botones-wrap { display: flex; gap: 4px; flex-wrap: wrap; }
         
         #texto-ayuda {
@@ -28,10 +32,10 @@
         }
         
         #tablero-puntuacion {
-            position: absolute; top: 5px; right: 5px; z-index: 20;
             background: #222; color: white; padding: 4px 8px; border-radius: 8px;
             border: 2px solid gold; font-weight: bold; text-align: center;
             box-shadow: 2px 2px 10px rgba(0,0,0,0.5); font-size: 11px;
+            flex-shrink: 0;
         }
         .puntos-equipo { margin: 2px 0; }
         .puntos-equipo span { color: gold; font-size: 14px; }
@@ -47,11 +51,21 @@
         #btn-simular:disabled { background-color: #555; color: #aaa; border: none; }
         #btn-reset-puntos { background-color: #d32f2f; }
 
+        /* --- NUEVO: ZONA DE JUEGO (Debajo de la barra) --- */
+        #zona-juego {
+            flex: 1; display: grid;
+            /* Columnas y filas dinámicas para que las fichas quepan perfecto */
+            grid-template-columns: 80px 1fr 80px; 
+            grid-template-rows: 80px 1fr 80px;
+            grid-template-areas: ". north ." "west mesa east" ". south .";
+            position: relative; padding: 5px;
+        }
+
         #mesa { grid-area: mesa; display: flex; justify-content: center; align-items: center; padding: 10px; position: relative; }
         #mesa.drag-over { background-color: rgba(255,255,255,0.2); border: 2px dashed rgba(255,255,255,0.8); border-radius: 15px; }
 
         #info-juego {
-            position: absolute; top: 5px; left: 50%; transform: translateX(-50%);
+            position: absolute; top: 0px; left: 50%; transform: translateX(-50%);
             background: rgba(0,0,0,0.8); color: white; padding: 4px 12px; border-radius: 20px;
             font-size: 12px; font-weight: bold; pointer-events: none; z-index: 10; text-align: center; white-space: nowrap;
         }
@@ -61,13 +75,12 @@
 
         #mano-sur { grid-area: south; border-top: 2px solid rgba(255,255,255,0.2); }
         #mano-norte { grid-area: north; border-bottom: 2px solid rgba(255,255,255,0.2); }
-        /* Las manos laterales usan columna para apilarse hacia abajo */
         #mano-oeste { grid-area: west; flex-direction: column; border-right: 2px solid rgba(255,255,255,0.2); align-content: center; }
         #mano-este { grid-area: east; flex-direction: column; border-left: 2px solid rgba(255,255,255,0.2); align-content: center; }
         
         .etiqueta-jugador { position: absolute; color: rgba(255,255,255,0.8); font-size: 9px; font-weight: bold; text-transform: uppercase; z-index: 0; pointer-events: none; }
 
-        /* --- FICHAS (Reducidas un 20% para ajustarse al móvil) --- */
+        /* --- FICHAS --- */
         .ficha {
             width: 26px; height: 52px; background-color: white; border-radius: 4px;
             box-shadow: 1px 1px 3px rgba(0,0,0,0.5); display: flex; flex-direction: column;
@@ -78,13 +91,11 @@
         
         .ficha:active { transform: scale(1.15); box-shadow: 0px 0px 10px gold; z-index: 50; }
         
-        /* Fichas Este/Oeste */
         #mano-este .ficha, #mano-oeste .ficha { width: 52px; height: 26px; flex-direction: row; margin: 1px;}
         #mano-este .linea-divisoria, #mano-oeste .linea-divisoria { width: 1px; height: 85%; margin: auto 0; }
         
         .ficha-clone { position: fixed !important; z-index: 9999 !important; opacity: 0.9; transform: scale(1.15); pointer-events: none !important; box-shadow: 2px 5px 15px rgba(0,0,0,0.8); }
         
-        /* Fichas en la mesa */
         #mesa .ficha { width: 50px; height: 25px; flex-direction: row; cursor: default; flex-shrink: 0; margin: 0; }
         #mesa .ficha:hover { transform: none; box-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
         #mesa .linea-divisoria { width: 1px; height: 85%; margin: auto 0; }
@@ -93,7 +104,6 @@
         
         .mitad { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 1px; pointer-events: none; }
         .linea-divisoria { height: 1px; background-color: black; width: 85%; margin: 0 auto; pointer-events: none; }
-        /* Puntos reducidos */
         .punto { width: 3px; height: 3px; background-color: #000; border-radius: 50%; justify-self: center; align-self: center; pointer-events: none; }
 
         /* --- MODALES --- */
@@ -114,24 +124,26 @@
 </head>
 <body>
 
-    <div id="controles">
-        <div class="botones-wrap">
-            <button ontouchstart="mostrarAyuda('🔄 Nueva Mano')" onmouseenter="mostrarAyuda('🔄 Nueva Mano')" onclick="iniciarMano()">🔄</button>
-            <button class="btn-secundario" ontouchstart="mostrarAyuda('⏪ Reiniciar desde cero')" onmouseenter="mostrarAyuda('⏪ Reiniciar desde cero')" onclick="reiniciarManoActual()">⏪</button>
-            <button id="btn-deshacer" ontouchstart="mostrarAyuda('↩️ Deshacer movimiento')" onmouseenter="mostrarAyuda('↩️ Deshacer movimiento')" onclick="deshacerJugada()" disabled>↩️</button>
-            <button id="btn-simular" ontouchstart="mostrarAyuda('🔮 Calcular % de victoria')" onmouseenter="mostrarAyuda('🔮 Calcular % de victoria')" onclick="ejecutarSimulacionMonteCarlo()" disabled>🔮 Simular</button>
-            <button class="btn-secundario" ontouchstart="mostrarAyuda('💾 Guardar ejercicio')" onmouseenter="mostrarAyuda('💾 Guardar ejercicio')" onclick="guardarEjercicioActual()">💾</button>
-            <button class="btn-secundario" ontouchstart="mostrarAyuda('📂 Cargar ejercicio')" onmouseenter="mostrarAyuda('📂 Cargar ejercicio')" onclick="abrirModalCargar()">📂</button>
-            <button id="btn-reset-puntos" ontouchstart="mostrarAyuda('🗑️ Borrar puntuación')" onmouseenter="mostrarAyuda('🗑️ Borrar puntuación')" onclick="reiniciarPartidaCompleta()">🗑️</button>
+    <header id="barra-superior">
+        <div id="controles">
+            <div class="botones-wrap">
+                <button ontouchstart="mostrarAyuda('🔄 Nueva Mano')" onmouseenter="mostrarAyuda('🔄 Nueva Mano')" onclick="iniciarMano()">🔄</button>
+                <button class="btn-secundario" ontouchstart="mostrarAyuda('⏪ Reiniciar desde cero')" onmouseenter="mostrarAyuda('⏪ Reiniciar desde cero')" onclick="reiniciarManoActual()">⏪</button>
+                <button id="btn-deshacer" ontouchstart="mostrarAyuda('↩️ Deshacer movimiento')" onmouseenter="mostrarAyuda('↩️ Deshacer movimiento')" onclick="deshacerJugada()" disabled>↩️</button>
+                <button id="btn-simular" ontouchstart="mostrarAyuda('🔮 Calcular % de victoria')" onmouseenter="mostrarAyuda('🔮 Calcular % de victoria')" onclick="ejecutarSimulacionMonteCarlo()" disabled>🔮 Simular</button>
+                <button class="btn-secundario" ontouchstart="mostrarAyuda('💾 Guardar ejercicio')" onmouseenter="mostrarAyuda('💾 Guardar ejercicio')" onclick="guardarEjercicioActual()">💾</button>
+                <button class="btn-secundario" ontouchstart="mostrarAyuda('📂 Cargar ejercicio')" onmouseenter="mostrarAyuda('📂 Cargar ejercicio')" onclick="abrirModalCargar()">📂</button>
+                <button id="btn-reset-puntos" ontouchstart="mostrarAyuda('🗑️ Borrar puntuación')" onmouseenter="mostrarAyuda('🗑️ Borrar puntuación')" onclick="reiniciarPartidaCompleta()">🗑️</button>
+            </div>
+            <div id="texto-ayuda">Toque un botón para ver su función</div>
         </div>
-        <div id="texto-ayuda">Toque un botón para ver su función</div>
-    </div>
 
-    <div id="tablero-puntuacion">
-        <div class="puntos-equipo">S-N: <span id="pts-nosotros">0</span></div>
-        <hr style="border-color: #555; margin: 2px 0;">
-        <div class="puntos-equipo">E-O: <span id="pts-ellos">0</span></div>
-    </div>
+        <div id="tablero-puntuacion">
+            <div class="puntos-equipo">S-N: <span id="pts-nosotros">0</span></div>
+            <hr style="border-color: #555; margin: 2px 0;">
+            <div class="puntos-equipo">E-O: <span id="pts-ellos">0</span></div>
+        </div>
+    </header>
 
     <div id="modal-decision" class="modal-fondo">
         <div class="modal-contenido">
@@ -169,15 +181,17 @@
         </div>
     </div>
 
-    <div id="mano-norte" class="zona-mano"><div class="etiqueta-jugador" style="top: 2px;">Norte</div></div>
-    <div id="mano-oeste" class="zona-mano"><div class="etiqueta-jugador" style="left: -15px; writing-mode: vertical-rl; transform: rotate(180deg);">Oeste</div></div>
-    <div id="mesa"><div id="info-juego">Cargando...</div></div>
-    <div id="mano-este" class="zona-mano"><div class="etiqueta-jugador" style="right: -15px; writing-mode: vertical-rl;">Este</div></div>
-    <div id="mano-sur" class="zona-mano"><div class="etiqueta-jugador" style="bottom: 2px;">Sur</div></div>
+    <main id="zona-juego">
+        <div id="mano-norte" class="zona-mano"><div class="etiqueta-jugador" style="top: 2px;">Norte</div></div>
+        <div id="mano-oeste" class="zona-mano"><div class="etiqueta-jugador" style="left: -15px; writing-mode: vertical-rl; transform: rotate(180deg);">Oeste</div></div>
+        <div id="mesa"><div id="info-juego">Cargando...</div></div>
+        <div id="mano-este" class="zona-mano"><div class="etiqueta-jugador" style="right: -15px; writing-mode: vertical-rl;">Este</div></div>
+        <div id="mano-sur" class="zona-mano"><div class="etiqueta-jugador" style="bottom: 2px;">Sur</div></div>
+    </main>
 
     <script>
         // =====================================================================
-        // MOTOR DE ARRASTRE NATIVO
+        // MOTOR DE ARRASTRE NATIVO Y GESTOS
         // =====================================================================
         let activeTile = null;
         let cloneTile = null;
@@ -188,20 +202,17 @@
             const tile = e.target.closest('.ficha');
             if (!tile) return;
             
-            // Detección de DOBLE TOQUE (Tap rápido)
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTapTime;
             if (tapLength < 300 && tapLength > 0) {
                 if (tile.parentElement.id !== 'mesa') intentarJugarFicha(tile);
-                lastTapTime = 0;
-                return;
+                lastTapTime = 0; return;
             }
             lastTapTime = currentTime;
 
             if (tile.parentElement.id === 'mesa') return;
 
             e.preventDefault(); 
-            
             activeTile = tile;
             const rect = activeTile.getBoundingClientRect();
             offsetX = e.clientX - rect.left;
@@ -270,10 +281,15 @@
         document.addEventListener('pointerup', handlePointerUp);
         document.addEventListener('pointercancel', handlePointerUp); 
 
-        // =====================================================================
-        // RESTO DEL CÓDIGO DEL JUEGO
-        // =====================================================================
+        // Permite zoom si se usan dos dedos, bloquea scroll si se arrastra una ficha
+        window.addEventListener('touchmove', function(event) { 
+            if(event.touches && event.touches.length > 1) return;
+            if(event.target.closest('.ficha')) event.preventDefault(); 
+        }, {passive: false});
 
+        // =====================================================================
+        // LÓGICA DEL JUEGO
+        // =====================================================================
         let timerAyuda;
         function mostrarAyuda(texto) {
             const barra = document.getElementById('texto-ayuda');
@@ -425,7 +441,7 @@
         function deshacerJugada() {
             if (historialJugadas.length === 0) return; let jugada = historialJugadas.pop();
             extremoIzquierdo = jugada.prevIzq; extremoDerecho = jugada.prevDer; indiceTurnoActual = jugada.prevTurno; juegoIniciado = jugada.prevIniciado; pasesConsecutivos = jugada.prevPases; juegoTerminado = false;
-            let ficha = document.getElementById(jugada.idFicha); ficha.draggable = true; ficha.style.cursor = 'pointer'; ficha.style.margin = '0'; ficha.classList.remove('doble');
+            let ficha = document.getElementById(jugada.idFicha); ficha.draggable = true; ficha.style.cursor = 'grab'; ficha.style.margin = '0'; ficha.classList.remove('doble');
             ficha.dataset.v1 = jugada.prevV1; ficha.dataset.v2 = jugada.prevV2;
             dibujarMitad(ficha.querySelector('.m1'), parseInt(jugada.prevV1)); dibujarMitad(ficha.querySelector('.m2'), parseInt(jugada.prevV2));
             document.getElementById(jugada.origen).appendChild(ficha);
@@ -477,7 +493,7 @@
         function iniciarMano() {
             document.querySelectorAll('.ficha').forEach(f => f.remove()); ordenJugadores.forEach(id => document.getElementById(id).classList.remove('turno-activo'));
             juegoIniciado = false; juegoTerminado = false; extremoIzquierdo = null; extremoDerecho = null; indiceTurnoActual = -1; pasesConsecutivos = 0; historialJugadas = []; 
-            actualizarBotonesControl(); actualizarMarcadorInfo("Arrastre libre o Doble Toque");
+            actualizarBotonesControl(); actualizarMarcadorInfo("Arrastra o haz Doble Toque");
             let todasLasFichas = []; for (let i = 0; i <= 6; i++) { for (let j = i; j <= 6; j++) { todasLasFichas.push([i, j]); } }
             for (let i = todasLasFichas.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [todasLasFichas[i], todasLasFichas[j]] = [todasLasFichas[j], todasLasFichas[i]]; }
             const manos = { 'mano-sur': todasLasFichas.splice(0, 7), 'mano-este': todasLasFichas.splice(0, 7), 'mano-norte': todasLasFichas.splice(0, 7), 'mano-oeste': todasLasFichas.splice(0, 7) };

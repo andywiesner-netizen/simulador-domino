@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Simulador de Dominó PRO - Móvil Perfecto</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Simulador de Dominó PRO - Móvil</title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/default.css">
     <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/index.min.js"></script>
@@ -16,6 +16,8 @@
             grid-template-columns: 120px 1fr 120px; 
             grid-template-rows: 90px 1fr 90px;
             grid-template-areas: ". north ." "west mesa east" ". south .";
+            /* Permitimos que el body se desborde para poder hacer zoom y scroll */
+            overflow: auto;
         }
 
         #controles { position: absolute; top: 5px; left: 5px; z-index: 20; max-width: 65%; display: flex; flex-direction: column; gap: 5px; }
@@ -75,10 +77,17 @@
             border: 1px solid #bbb; user-select: none; transition: transform 0.2s, box-shadow 0.2s;
             z-index: 1; cursor: pointer; 
             
-            /* Reglas táctiles críticas para móviles */
+            /* CRÍTICO PARA EL ARRASTRE MÓVIL */
             touch-action: none !important; 
             -webkit-user-select: none; 
             -webkit-touch-callout: none;
+        }
+        
+        /* Efecto visual al tocar la ficha con el dedo para saber que la agarraste */
+        .ficha:active {
+            transform: scale(1.15);
+            box-shadow: 0px 0px 10px gold;
+            z-index: 50;
         }
         
         .ficha:hover { transform: translateY(-5px); box-shadow: 2px 5px 10px rgba(0,0,0,0.5); }
@@ -87,7 +96,7 @@
         
         .ficha.dragging { opacity: 0.4; }
         
-        /* Imagen "fantasma" que sigues con el dedo. DEBE ser intocable para poder soltarla en celulares. */
+        /* El "fantasma" que sigue al dedo debe ser intocable */
         .dnd-poly-drag-image { 
             opacity: 0.7 !important; 
             transform: scale(1.2) !important; 
@@ -125,13 +134,13 @@
 
     <div id="controles">
         <div class="botones-wrap">
-            <button ontouchstart="mostrarAyuda('🔄 Nueva: Reparte 28 fichas al azar')" onmouseenter="mostrarAyuda('🔄 Nueva: Reparte 28 fichas al azar')" onclick="iniciarMano()">🔄</button>
-            <button class="btn-secundario" ontouchstart="mostrarAyuda('⏪ Reiniciar: Vuelve al inicio de esta mano')" onmouseenter="mostrarAyuda('⏪ Reiniciar: Vuelve al inicio de esta mano')" onclick="reiniciarManoActual()">⏪</button>
-            <button id="btn-deshacer" ontouchstart="mostrarAyuda('↩️ Deshacer: Retrocede 1 movimiento')" onmouseenter="mostrarAyuda('↩️ Deshacer: Retrocede 1 movimiento')" onclick="deshacerJugada()" disabled>↩️</button>
-            <button id="btn-simular" ontouchstart="mostrarAyuda('🔮 Simular: Calcula % de victoria desde aquí')" onmouseenter="mostrarAyuda('🔮 Simular: Calcula % de victoria desde aquí')" onclick="ejecutarSimulacionMonteCarlo()" disabled>🔮 Simular</button>
-            <button class="btn-secundario" ontouchstart="mostrarAyuda('💾 Guardar: Graba esta secuencia exacta')" onmouseenter="mostrarAyuda('💾 Guardar: Graba esta secuencia exacta')" onclick="guardarEjercicioActual()">💾</button>
-            <button class="btn-secundario" ontouchstart="mostrarAyuda('📂 Cargar: Abre un ejercicio guardado')" onmouseenter="mostrarAyuda('📂 Cargar: Abre un ejercicio guardado')" onclick="abrirModalCargar()">📂</button>
-            <button id="btn-reset-puntos" ontouchstart="mostrarAyuda('🗑️ Puntos: Borra el marcador global a cero')" onmouseenter="mostrarAyuda('🗑️ Puntos: Borra el marcador global a cero')" onclick="reiniciarPartidaCompleta()">🗑️</button>
+            <button ontouchstart="mostrarAyuda('🔄 Nueva Mano')" onmouseenter="mostrarAyuda('🔄 Nueva Mano')" onclick="iniciarMano()">🔄</button>
+            <button class="btn-secundario" ontouchstart="mostrarAyuda('⏪ Reiniciar desde cero')" onmouseenter="mostrarAyuda('⏪ Reiniciar desde cero')" onclick="reiniciarManoActual()">⏪</button>
+            <button id="btn-deshacer" ontouchstart="mostrarAyuda('↩️ Deshacer movimiento')" onmouseenter="mostrarAyuda('↩️ Deshacer movimiento')" onclick="deshacerJugada()" disabled>↩️</button>
+            <button id="btn-simular" ontouchstart="mostrarAyuda('🔮 Calcular % de victoria')" onmouseenter="mostrarAyuda('🔮 Calcular % de victoria')" onclick="ejecutarSimulacionMonteCarlo()" disabled>🔮 Simular</button>
+            <button class="btn-secundario" ontouchstart="mostrarAyuda('💾 Guardar ejercicio')" onmouseenter="mostrarAyuda('💾 Guardar ejercicio')" onclick="guardarEjercicioActual()">💾</button>
+            <button class="btn-secundario" ontouchstart="mostrarAyuda('📂 Cargar ejercicio')" onmouseenter="mostrarAyuda('📂 Cargar ejercicio')" onclick="abrirModalCargar()">📂</button>
+            <button id="btn-reset-puntos" ontouchstart="mostrarAyuda('🗑️ Borrar puntuación')" onmouseenter="mostrarAyuda('🗑️ Borrar puntuación')" onclick="reiniciarPartidaCompleta()">🗑️</button>
         </div>
         <div id="texto-ayuda">Toque un botón para ver su función</div>
     </div>
@@ -165,7 +174,7 @@
     <div id="modal-simulacion" class="modal-fondo">
         <div class="modal-contenido">
             <h3 style="margin-top:0;">📊 Probabilidades de Victoria</h3>
-            <p style="font-size: 12px; color: #aaa;">Basado en 1,000 partidas simuladas desde este punto exacto con jugadas al azar.</p>
+            <p style="font-size: 12px; color: #aaa;">Basado en 1,000 partidas simuladas al azar desde este punto.</p>
             <div style="text-align: left; font-size: 14px; margin-top: 15px;">
                 🟢 <strong>Nosotros (S-N):</strong> <span id="sim-nosotros">0</span>%<br>
                 🔴 <strong>Ellos (E-O):</strong> <span id="sim-ellos">0</span>%<br>
@@ -185,14 +194,20 @@
     <div id="mano-sur" class="zona-mano"><div class="etiqueta-jugador" style="bottom: 2px;">Sur</div></div>
 
     <script>
-        // --- INICIALIZACIÓN TÁCTIL (MÓVILES) ---
-        // Arrastre casi instantáneo (quitamos el holdToDrag alto)
+        // --- INICIALIZACIÓN TÁCTIL EXACTA ---
         MobileDragDrop.polyfill({ 
+            // 300ms de retraso. Obliga al usuario a mantener el dedo quieto un instante antes de arrastrar.
+            holdToDrag: 300, 
             dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride 
         });
 
-        // Previene el scroll de la pantalla SOLO si tocas una ficha. Así evitas cancelar el drag.
+        // Detector de toques inteligente
         window.addEventListener('touchmove', function(event) { 
+            // Si el usuario usa DOS dedos, quiere hacer zoom. Le permitimos el paso.
+            if(event.touches && event.touches.length > 1) {
+                return;
+            }
+            // Si usa UN dedo sobre una ficha, bloqueamos la pantalla para que la ficha se pueda mover sin que tiemble el fondo
             if(event.target.closest('.ficha')) {
                 event.preventDefault(); 
             }
@@ -202,12 +217,8 @@
         let timerAyuda;
         function mostrarAyuda(texto) {
             const barra = document.getElementById('texto-ayuda');
-            barra.innerText = texto; 
-            barra.style.opacity = 1;
-            clearTimeout(timerAyuda); 
-            timerAyuda = setTimeout(() => { 
-                barra.style.opacity = 0; 
-            }, 3500);
+            barra.innerText = texto; barra.style.opacity = 1;
+            clearTimeout(timerAyuda); timerAyuda = setTimeout(() => { barra.style.opacity = 0; }, 3500);
         }
 
         const posicionesPuntos = { 0:[], 1:[4], 2:[2,6], 3:[2,4,6], 4:[0,2,6,8], 5:[0,2,4,6,8], 6:[0,2,3,5,6,8] };
@@ -633,7 +644,7 @@
             return ficha;
         }
 
-        // --- MANEJO DE LA MESA Y ARRASTRE CORREGIDO ---
+        // --- MANEJO DE LA MESA Y ARRASTRE ---
         const mesa = document.getElementById('mesa');
         
         mesa.addEventListener('dragover', (e) => { 
@@ -733,7 +744,7 @@
             juegoIniciado = false; juegoTerminado = false; extremoIzquierdo = null; extremoDerecho = null; 
             indiceTurnoActual = -1; pasesConsecutivos = 0; historialJugadas = []; 
             actualizarBotonesControl(); 
-            actualizarMarcadorInfo("Arrastre o Doble Toque");
+            actualizarMarcadorInfo("Mantén presionada 1 seg o haz doble toque");
             
             let todasLasFichas = []; 
             for (let i = 0; i <= 6; i++) { for (let j = i; j <= 6; j++) { todasLasFichas.push([i, j]); } }

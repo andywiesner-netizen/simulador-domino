@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Simulador de Dominó PRO - Móvil</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Dominó PRO - Móvil Corregido</title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/default.css">
     <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/index.min.js"></script>
@@ -12,22 +12,21 @@
         /* --- ESTILOS VISUALES Y LAYOUT --- */
         body {
             margin: 0; background-color: #1a5310; font-family: 'Segoe UI', sans-serif;
-            height: 100vh; overflow: hidden; display: grid;
+            min-height: 100vh; display: grid;
             grid-template-columns: 120px 1fr 120px; 
             grid-template-rows: 90px 1fr 90px;
             grid-template-areas: ". north ." "west mesa east" ". south .";
-            overscroll-behavior-y: none; touch-action: none;
+            /* Quitamos el touch-action: none del body para permitir mover la pantalla */
         }
 
         #controles { position: absolute; top: 5px; left: 5px; z-index: 20; max-width: 65%; display: flex; flex-direction: column; gap: 5px; }
         .botones-wrap { display: flex; gap: 5px; flex-wrap: wrap; }
         
-        /* --- NUEVO: BARRA DE AYUDA DINÁMICA --- */
         #texto-ayuda {
             font-size: 11px; color: #fff; background: rgba(0, 0, 0, 0.7);
             padding: 4px 8px; border-radius: 4px; border-left: 3px solid #ff9800;
             font-weight: bold; transition: opacity 0.3s; opacity: 0;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;
         }
         
         #tablero-puntuacion {
@@ -51,7 +50,7 @@
         #btn-reset-puntos { background-color: #d32f2f; }
 
         #mesa { grid-area: mesa; display: flex; justify-content: center; align-items: center; padding: 10px; position: relative; }
-        #mesa.drag-over { background-color: rgba(255,255,255,0.1); border: 2px dashed rgba(255,255,255,0.5); border-radius: 15px; }
+        #mesa.drag-over { background-color: rgba(255,255,255,0.2); border: 2px dashed rgba(255,255,255,0.8); border-radius: 15px; }
 
         #info-juego {
             position: absolute; top: 5px; left: 50%; transform: translateX(-50%);
@@ -59,27 +58,41 @@
             font-size: 13px; font-weight: bold; pointer-events: none; z-index: 10; text-align: center; white-space: nowrap;
         }
 
-        .zona-mano { display: flex; justify-content: center; align-items: center; gap: 3px; padding: 3px; background-color: rgba(0, 0, 0, 0.2); position: relative; }
-        .zona-mano.drag-over-mano { background-color: rgba(255, 255, 255, 0.15); border-radius: 10px; }
+        /* SOLUCIÓN 2: Las manos laterales ahora pueden envolver las fichas (flex-wrap) si no caben */
+        .zona-mano { display: flex; justify-content: center; align-items: center; gap: 3px; padding: 3px; background-color: rgba(0, 0, 0, 0.2); position: relative; flex-wrap: wrap; }
+        .zona-mano.drag-over-mano { background-color: rgba(255, 255, 255, 0.2); border-radius: 10px; }
         .zona-mano.turno-activo { background-color: rgba(255, 215, 0, 0.3); box-shadow: inset 0 0 15px rgba(255, 215, 0, 0.8); border-color: gold !important; }
 
         #mano-sur { grid-area: south; border-top: 2px solid rgba(255,255,255,0.2); }
         #mano-norte { grid-area: north; border-bottom: 2px solid rgba(255,255,255,0.2); }
-        #mano-oeste { grid-area: west; flex-direction: column; border-right: 2px solid rgba(255,255,255,0.2); }
-        #mano-este { grid-area: east; flex-direction: column; border-left: 2px solid rgba(255,255,255,0.2); }
+        #mano-oeste { grid-area: west; flex-direction: row; border-right: 2px solid rgba(255,255,255,0.2); align-content: center; }
+        #mano-este { grid-area: east; flex-direction: row; border-left: 2px solid rgba(255,255,255,0.2); align-content: center; }
+        
         .etiqueta-jugador { position: absolute; color: rgba(255,255,255,0.8); font-size: 10px; font-weight: bold; text-transform: uppercase; z-index: 0; pointer-events: none; }
 
-        /* --- FICHAS MÓVILES --- */
+        /* --- FICHAS --- */
         .ficha {
             width: 32px; height: 64px; background-color: white; border-radius: 5px;
             box-shadow: 1px 1px 4px rgba(0,0,0,0.5); display: flex; flex-direction: column;
             border: 1px solid #bbb; user-select: none; transition: transform 0.2s, box-shadow 0.2s;
             z-index: 1; cursor: pointer; touch-action: none !important; -webkit-user-select: none; -webkit-touch-callout: none;
         }
+        
         .ficha:hover { transform: translateY(-5px); box-shadow: 2px 5px 10px rgba(0,0,0,0.5); }
-        #mano-este .ficha, #mano-oeste .ficha { width: 64px; height: 32px; flex-direction: row; }
+        
+        /* Fichas laterales (Este/Oeste) */
+        #mano-este .ficha, #mano-oeste .ficha { width: 64px; height: 32px; flex-direction: row; margin: 2px;}
         #mano-este .linea-divisoria, #mano-oeste .linea-divisoria { width: 1px; height: 85%; margin: auto 0; }
-        .ficha.dragging, .ficha.dnd-poly-drag-image { opacity: 0.6; transform: scale(1.15); border: 2px solid gold; }
+        
+        .ficha.dragging { opacity: 0.4; }
+        
+        /* SOLUCIÓN 3 CRÍTICA: La sombra que arrastras NO debe bloquear el tacto de tu dedo */
+        .dnd-poly-drag-image { 
+            opacity: 0.7 !important; 
+            transform: scale(1.2) !important; 
+            pointer-events: none !important; 
+            z-index: 9999 !important;
+        }
         
         #mesa .ficha { width: 60px; height: 30px; flex-direction: row; cursor: default; flex-shrink: 0; margin: 0; }
         #mesa .ficha:hover { transform: none; box-shadow: 1px 1px 4px rgba(0,0,0,0.5); }
@@ -101,7 +114,6 @@
         #lista-ejercicios li { background: #333; padding: 8px; margin-bottom: 5px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; text-align: left; font-size: 14px;}
         .btn-borrar-ejercicio { background: transparent; color: #ff5252; padding: 2px; font-size: 14px; box-shadow: none; }
         
-        /* Resultados Simulación */
         .barra-prob { width: 100%; height: 20px; background: #555; border-radius: 10px; overflow: hidden; display: flex; margin-top: 10px;}
         .barra-nosotros { background: lime; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: black;}
         .barra-ellos { background: red; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: white;}
@@ -131,43 +143,35 @@
 
     <div id="modal-decision" class="modal-fondo"><div class="modal-contenido"><h4>Calza en ambos extremos</h4><div class="modal-botones"><button class="btn-decision" id="btn-izq">Izquierda</button><button class="btn-decision" id="btn-der">Derecha</button></div></div></div>
     <div id="modal-cargar" class="modal-fondo"><div class="modal-contenido"><h3>Secuencias Guardadas</h3><ul id="lista-ejercicios"></ul><div class="modal-botones"><button class="btn-decision" onclick="document.getElementById('modal-cargar').style.display='none'" style="background: #555;">Cerrar</button></div></div></div>
-    
-    <div id="modal-simulacion" class="modal-fondo">
-        <div class="modal-contenido">
-            <h3 style="margin-top:0;">📊 Probabilidades de Victoria</h3>
-            <p style="font-size: 12px; color: #aaa;">Basado en 1,000 partidas simuladas desde este punto exacto con jugadas al azar.</p>
-            <div style="text-align: left; font-size: 14px; margin-top: 15px;">
-                🟢 <strong>Nosotros (S-N):</strong> <span id="sim-nosotros">0</span>%<br>
-                🔴 <strong>Ellos (E-O):</strong> <span id="sim-ellos">0</span>%<br>
-                ⚪ <strong>Empates (Tranca):</strong> <span id="sim-empates">0</span>%
-            </div>
-            <div class="barra-prob" id="barra-visual"></div>
-            <div class="modal-botones"><button class="btn-decision" onclick="document.getElementById('modal-simulacion').style.display='none'">Cerrar Análisis</button></div>
-        </div>
-    </div>
+    <div id="modal-simulacion" class="modal-fondo"><div class="modal-contenido"><h3 style="margin-top:0;">📊 Probabilidades de Victoria</h3><p style="font-size: 12px; color: #aaa;">Basado en 1,000 partidas simuladas desde este punto exacto con jugadas al azar.</p><div style="text-align: left; font-size: 14px; margin-top: 15px;">🟢 <strong>Nosotros (S-N):</strong> <span id="sim-nosotros">0</span>%<br>🔴 <strong>Ellos (E-O):</strong> <span id="sim-ellos">0</span>%<br>⚪ <strong>Empates (Tranca):</strong> <span id="sim-empates">0</span>%</div><div class="barra-prob" id="barra-visual"></div><div class="modal-botones"><button class="btn-decision" onclick="document.getElementById('modal-simulacion').style.display='none'">Cerrar Análisis</button></div></div></div>
 
     <div id="mano-norte" class="zona-mano"><div class="etiqueta-jugador" style="top: 2px;">Norte</div></div>
-    <div id="mano-oeste" class="zona-mano"><div class="etiqueta-jugador" style="left: 2px; writing-mode: vertical-rl; transform: rotate(180deg);">Oeste</div></div>
+    <div id="mano-oeste" class="zona-mano"><div class="etiqueta-jugador" style="left: -15px; writing-mode: vertical-rl; transform: rotate(180deg);">Oeste</div></div>
     <div id="mesa"><div id="info-juego">Cargando...</div></div>
-    <div id="mano-este" class="zona-mano"><div class="etiqueta-jugador" style="right: 2px; writing-mode: vertical-rl;">Este</div></div>
+    <div id="mano-este" class="zona-mano"><div class="etiqueta-jugador" style="right: -15px; writing-mode: vertical-rl;">Este</div></div>
     <div id="mano-sur" class="zona-mano"><div class="etiqueta-jugador" style="bottom: 2px;">Sur</div></div>
 
     <script>
-        MobileDragDrop.polyfill({ holdToDrag: 250, dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride });
-        window.addEventListener('touchmove', function(event) { if(event.target.closest('.ficha')) event.preventDefault(); }, {passive: false});
+        // Configuración del Polyfill Táctil
+        MobileDragDrop.polyfill({ 
+            holdToDrag: 250, 
+            dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride 
+        });
+
+        // Previene comportamientos extraños pero permite hacer scroll a la página si tocas el fondo
+        window.addEventListener('touchmove', function(event) { 
+            if(event.target.closest('.ficha')) {
+                // Solo previene el scroll de la página si estás tocando activamente una ficha
+                event.preventDefault(); 
+            }
+        }, {passive: false});
 
         // --- SISTEMA DE AYUDA (TOOLTIPS) ---
         let timerAyuda;
         function mostrarAyuda(texto) {
             const barra = document.getElementById('texto-ayuda');
-            barra.innerText = texto;
-            barra.style.opacity = 1;
-            
-            // La barra desaparece sola después de 3.5 segundos
-            clearTimeout(timerAyuda);
-            timerAyuda = setTimeout(() => {
-                barra.style.opacity = 0;
-            }, 3500);
+            barra.innerText = texto; barra.style.opacity = 1;
+            clearTimeout(timerAyuda); timerAyuda = setTimeout(() => { barra.style.opacity = 0; }, 3500);
         }
 
         const posicionesPuntos = { 0:[], 1:[4], 2:[2,6], 3:[2,4,6], 4:[0,2,6,8], 5:[0,2,4,6,8], 6:[0,2,3,5,6,8] };
@@ -361,7 +365,7 @@
 
         const mesa = document.getElementById('mesa');
         mesa.addEventListener('dragover', (e) => { e.preventDefault(); mesa.classList.add('drag-over'); });
-        mesa.addEventListener('dragleave', () => mesa.classList.remove('drag-over'));
+        mesa.addEventListener('dragleave', () => mesa.classList.remove('drag-over'); });
         mesa.addEventListener('drop', (e) => { e.preventDefault(); mesa.classList.remove('drag-over'); const ficha = document.getElementById(e.dataTransfer.getData('text/plain')); if (ficha) intentarJugarFicha(ficha); });
 
         document.querySelectorAll('.zona-mano').forEach(zona => {

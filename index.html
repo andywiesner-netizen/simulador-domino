@@ -3,22 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Simulador de Dominó PRO - Diseño Vertical</title>
+    <title>Simulador de Dominó PRO - Inteligencia Artificial</title>
 
     <style>
         /* --- ESTILOS VISUALES Y LAYOUT --- */
         body {
             margin: 0; background-color: #1a5310; font-family: 'Segoe UI', sans-serif;
-            min-height: 100vh; display: flex; flex-direction: column;
-            overflow: auto; /* Permite scroll y zoom libre */
+            min-height: 100vh; display: flex; flex-direction: column; overflow: auto;
         }
 
-        /* --- NUEVO: BARRA SUPERIOR AISLADA --- */
         #barra-superior {
             display: flex; justify-content: space-between; align-items: flex-start;
             background-color: rgba(0, 0, 0, 0.5); padding: 6px 10px;
-            flex-wrap: wrap; gap: 10px; z-index: 20;
-            border-bottom: 2px solid gold;
+            flex-wrap: wrap; gap: 10px; z-index: 20; border-bottom: 2px solid gold;
         }
 
         #controles { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 220px; }
@@ -34,8 +31,7 @@
         #tablero-puntuacion {
             background: #222; color: white; padding: 4px 8px; border-radius: 8px;
             border: 2px solid gold; font-weight: bold; text-align: center;
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.5); font-size: 11px;
-            flex-shrink: 0;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.5); font-size: 11px; flex-shrink: 0;
         }
         .puntos-equipo { margin: 2px 0; }
         .puntos-equipo span { color: gold; font-size: 14px; }
@@ -46,23 +42,18 @@
         }
         .btn-secundario { background-color: #2196F3; }
         #btn-deshacer { background-color: #9c27b0; } 
-        #btn-deshacer:disabled { background-color: #555; color: #aaa; }
+        #btn-deshacer:disabled, #btn-sugerir:disabled, #btn-simular:disabled { background-color: #555; color: #aaa; border: none; box-shadow: none;}
         #btn-simular { background-color: #009688; border: 1px solid #004d40; }
-        #btn-simular:disabled { background-color: #555; color: #aaa; border: none; }
+        #btn-sugerir { background-color: #4CAF50; border: 1px solid #1B5E20; color: white;}
         #btn-reset-puntos { background-color: #d32f2f; }
 
-        /* --- NUEVO: ZONA DE JUEGO (Debajo de la barra) --- */
         #zona-juego {
-            flex: 1; display: grid;
-            /* Columnas y filas dinámicas para que las fichas quepan perfecto */
-            grid-template-columns: 80px 1fr 80px; 
-            grid-template-rows: 80px 1fr 80px;
+            flex: 1; display: grid; position: relative; padding: 5px;
+            grid-template-columns: 80px 1fr 80px; grid-template-rows: 80px 1fr 80px;
             grid-template-areas: ". north ." "west mesa east" ". south .";
-            position: relative; padding: 5px;
         }
 
         #mesa { grid-area: mesa; display: flex; justify-content: center; align-items: center; padding: 10px; position: relative; }
-        #mesa.drag-over { background-color: rgba(255,255,255,0.2); border: 2px dashed rgba(255,255,255,0.8); border-radius: 15px; }
 
         #info-juego {
             position: absolute; top: 0px; left: 50%; transform: translateX(-50%);
@@ -85,12 +76,18 @@
             width: 26px; height: 52px; background-color: white; border-radius: 4px;
             box-shadow: 1px 1px 3px rgba(0,0,0,0.5); display: flex; flex-direction: column;
             border: 1px solid #bbb; user-select: none; transition: transform 0.1s, box-shadow 0.1s;
-            z-index: 1; cursor: grab; 
-            touch-action: none !important; -webkit-user-select: none; -webkit-touch-callout: none;
+            z-index: 1; cursor: grab; touch-action: none !important; -webkit-user-select: none; -webkit-touch-callout: none;
         }
         
         .ficha:active { transform: scale(1.15); box-shadow: 0px 0px 10px gold; z-index: 50; }
         
+        /* FICHA SUGERIDA POR LA IA */
+        .ficha-sugerida {
+            box-shadow: 0 0 15px 5px #00e676 !important; border: 2px solid #00e676 !important;
+            transform: translateY(-5px); z-index: 10; animation: latido 1.5s infinite;
+        }
+        @keyframes latido { 0% { transform: translateY(-5px) scale(1); } 50% { transform: translateY(-5px) scale(1.05); } 100% { transform: translateY(-5px) scale(1); } }
+
         #mano-este .ficha, #mano-oeste .ficha { width: 52px; height: 26px; flex-direction: row; margin: 1px;}
         #mano-este .linea-divisoria, #mano-oeste .linea-divisoria { width: 1px; height: 85%; margin: auto 0; }
         
@@ -111,7 +108,6 @@
         .modal-contenido { background: #222; color: white; padding: 15px; border-radius: 10px; text-align: center; border: 2px solid gold; width: 85%; max-width: 350px; max-height: 80vh; overflow-y: auto;}
         .modal-botones { display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
         .btn-decision { background: #277714; font-size: 13px; padding: 8px; color: white; border: none; border-radius: 5px; flex: 1;}
-
         #lista-ejercicios { list-style: none; padding: 0; margin: 10px 0; }
         #lista-ejercicios li { background: #333; padding: 8px; margin-bottom: 5px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; text-align: left; font-size: 13px;}
         .btn-borrar-ejercicio { background: transparent; color: #ff5252; padding: 2px; font-size: 14px; box-shadow: none; }
@@ -130,14 +126,17 @@
                 <button ontouchstart="mostrarAyuda('🔄 Nueva Mano')" onmouseenter="mostrarAyuda('🔄 Nueva Mano')" onclick="iniciarMano()">🔄</button>
                 <button class="btn-secundario" ontouchstart="mostrarAyuda('⏪ Reiniciar desde cero')" onmouseenter="mostrarAyuda('⏪ Reiniciar desde cero')" onclick="reiniciarManoActual()">⏪</button>
                 <button id="btn-deshacer" ontouchstart="mostrarAyuda('↩️ Deshacer movimiento')" onmouseenter="mostrarAyuda('↩️ Deshacer movimiento')" onclick="deshacerJugada()" disabled>↩️</button>
-                <button id="btn-simular" ontouchstart="mostrarAyuda('🔮 Calcular % de victoria')" onmouseenter="mostrarAyuda('🔮 Calcular % de victoria')" onclick="ejecutarSimulacionMonteCarlo()" disabled>🔮 Simular</button>
+                
+                <button id="btn-sugerir" ontouchstart="mostrarAyuda('💡 Calcular mejor jugada')" onmouseenter="mostrarAyuda('💡 Calcular mejor jugada')" onclick="sugerirMejorJugada()" disabled>💡 Sugerir</button>
+                
+                <button id="btn-simular" ontouchstart="mostrarAyuda('🔮 Simular 5000 partidas al azar')" onmouseenter="mostrarAyuda('🔮 Simular 5000 partidas al azar')" onclick="ejecutarSimulacionMonteCarlo()" disabled>🔮 Simular (5k)</button>
+                
                 <button class="btn-secundario" ontouchstart="mostrarAyuda('💾 Guardar ejercicio')" onmouseenter="mostrarAyuda('💾 Guardar ejercicio')" onclick="guardarEjercicioActual()">💾</button>
                 <button class="btn-secundario" ontouchstart="mostrarAyuda('📂 Cargar ejercicio')" onmouseenter="mostrarAyuda('📂 Cargar ejercicio')" onclick="abrirModalCargar()">📂</button>
                 <button id="btn-reset-puntos" ontouchstart="mostrarAyuda('🗑️ Borrar puntuación')" onmouseenter="mostrarAyuda('🗑️ Borrar puntuación')" onclick="reiniciarPartidaCompleta()">🗑️</button>
             </div>
             <div id="texto-ayuda">Toque un botón para ver su función</div>
         </div>
-
         <div id="tablero-puntuacion">
             <div class="puntos-equipo">S-N: <span id="pts-nosotros">0</span></div>
             <hr style="border-color: #555; margin: 2px 0;">
@@ -154,32 +153,8 @@
             </div>
         </div>
     </div>
-    
-    <div id="modal-cargar" class="modal-fondo">
-        <div class="modal-contenido">
-            <h3 style="margin-top:0;">Secuencias Guardadas</h3>
-            <ul id="lista-ejercicios"></ul>
-            <div class="modal-botones">
-                <button class="btn-decision" onclick="document.getElementById('modal-cargar').style.display='none'" style="background: #555;">Cerrar</button>
-            </div>
-        </div>
-    </div>
-    
-    <div id="modal-simulacion" class="modal-fondo">
-        <div class="modal-contenido">
-            <h3 style="margin-top:0;">📊 Probabilidades</h3>
-            <p style="font-size: 11px; color: #aaa; margin-bottom: 5px;">Basado en 1,000 simulaciones al azar.</p>
-            <div style="text-align: left; font-size: 13px; margin-top: 10px;">
-                🟢 <strong>Nosotros (S-N):</strong> <span id="sim-nosotros">0</span>%<br>
-                🔴 <strong>Ellos (E-O):</strong> <span id="sim-ellos">0</span>%<br>
-                ⚪ <strong>Empates:</strong> <span id="sim-empates">0</span>%
-            </div>
-            <div class="barra-prob" id="barra-visual"></div>
-            <div class="modal-botones">
-                <button class="btn-decision" onclick="document.getElementById('modal-simulacion').style.display='none'">Cerrar</button>
-            </div>
-        </div>
-    </div>
+    <div id="modal-cargar" class="modal-fondo"><div class="modal-contenido"><h3 style="margin-top:0;">Secuencias Guardadas</h3><ul id="lista-ejercicios"></ul><div class="modal-botones"><button class="btn-decision" onclick="document.getElementById('modal-cargar').style.display='none'" style="background: #555;">Cerrar</button></div></div></div>
+    <div id="modal-simulacion" class="modal-fondo"><div class="modal-contenido"><h3 style="margin-top:0;">📊 Probabilidades</h3><p style="font-size: 11px; color: #aaa; margin-bottom: 5px;">Basado en 5,000 simulaciones al azar.</p><div style="text-align: left; font-size: 13px; margin-top: 10px;">🟢 <strong>Nosotros (S-N):</strong> <span id="sim-nosotros">0</span>%<br>🔴 <strong>Ellos (E-O):</strong> <span id="sim-ellos">0</span>%<br>⚪ <strong>Empates:</strong> <span id="sim-empates">0</span>%</div><div class="barra-prob" id="barra-visual"></div><div class="modal-botones"><button class="btn-decision" onclick="document.getElementById('modal-simulacion').style.display='none'">Cerrar</button></div></div></div>
 
     <main id="zona-juego">
         <div id="mano-norte" class="zona-mano"><div class="etiqueta-jugador" style="top: 2px;">Norte</div></div>
@@ -191,111 +166,64 @@
 
     <script>
         // =====================================================================
-        // MOTOR DE ARRASTRE NATIVO Y GESTOS
+        // MOTOR TÁCTIL NATIVO
         // =====================================================================
-        let activeTile = null;
-        let cloneTile = null;
-        let offsetX = 0; let offsetY = 0;
-        let lastTapTime = 0;
+        let activeTile = null; let cloneTile = null; let offsetX = 0; let offsetY = 0; let lastTapTime = 0;
 
         function handlePointerDown(e) {
-            const tile = e.target.closest('.ficha');
-            if (!tile) return;
-            
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTapTime;
-            if (tapLength < 300 && tapLength > 0) {
-                if (tile.parentElement.id !== 'mesa') intentarJugarFicha(tile);
-                lastTapTime = 0; return;
-            }
+            const tile = e.target.closest('.ficha'); if (!tile) return;
+            const currentTime = new Date().getTime(); const tapLength = currentTime - lastTapTime;
+            if (tapLength < 300 && tapLength > 0) { if (tile.parentElement.id !== 'mesa') intentarJugarFicha(tile); lastTapTime = 0; return; }
             lastTapTime = currentTime;
-
             if (tile.parentElement.id === 'mesa') return;
 
             e.preventDefault(); 
-            activeTile = tile;
-            const rect = activeTile.getBoundingClientRect();
-            offsetX = e.clientX - rect.left;
-            offsetY = e.clientY - rect.top;
+            activeTile = tile; const rect = activeTile.getBoundingClientRect();
+            offsetX = e.clientX - rect.left; offsetY = e.clientY - rect.top;
 
-            cloneTile = activeTile.cloneNode(true);
-            cloneTile.classList.add('ficha-clone');
-            cloneTile.style.left = rect.left + 'px';
-            cloneTile.style.top = rect.top + 'px';
-            document.body.appendChild(cloneTile);
-
-            activeTile.style.opacity = '0.3';
+            cloneTile = activeTile.cloneNode(true); cloneTile.classList.add('ficha-clone');
+            cloneTile.style.left = rect.left + 'px'; cloneTile.style.top = rect.top + 'px';
+            document.body.appendChild(cloneTile); activeTile.style.opacity = '0.3';
         }
 
         function handlePointerMove(e) {
-            if (!cloneTile) return;
-            e.preventDefault(); 
-            cloneTile.style.left = (e.clientX - offsetX) + 'px';
-            cloneTile.style.top = (e.clientY - offsetY) + 'px';
+            if (!cloneTile) return; e.preventDefault(); 
+            cloneTile.style.left = (e.clientX - offsetX) + 'px'; cloneTile.style.top = (e.clientY - offsetY) + 'px';
         }
 
         function handlePointerUp(e) {
             if (!cloneTile || !activeTile) return;
-
-            cloneTile.style.display = 'none';
-            const dropTarget = document.elementFromPoint(e.clientX, e.clientY);
-            
-            const mesaTarget = dropTarget ? dropTarget.closest('#mesa') : null;
-            const manoTarget = dropTarget ? dropTarget.closest('.zona-mano') : null;
+            cloneTile.style.display = 'none'; const dropTarget = document.elementFromPoint(e.clientX, e.clientY);
+            const mesaTarget = dropTarget ? dropTarget.closest('#mesa') : null; const manoTarget = dropTarget ? dropTarget.closest('.zona-mano') : null;
 
             if (mesaTarget) {
                 intentarJugarFicha(activeTile);
             } else if (manoTarget) {
                 const esVert = manoTarget.id === 'mano-este' || manoTarget.id === 'mano-oeste';
                 const fArrastrables = [...manoTarget.querySelectorAll('.ficha:not([style*="opacity: 0.3"])')];
-                
                 const despuesDeElemento = fArrastrables.reduce((masCercano, hijo) => {
-                    const caja = hijo.getBoundingClientRect();
-                    let dist = esVert ? (e.clientY - caja.top - caja.height / 2) : (e.clientX - caja.left - caja.width / 2);
-                    if (dist < 0 && dist > masCercano.dist) return { dist: dist, elemento: hijo };
-                    else return masCercano;
+                    const caja = hijo.getBoundingClientRect(); let dist = esVert ? (e.clientY - caja.top - caja.height / 2) : (e.clientX - caja.left - caja.width / 2);
+                    if (dist < 0 && dist > masCercano.dist) return { dist: dist, elemento: hijo }; else return masCercano;
                 }, { dist: Number.NEGATIVE_INFINITY }).elemento;
 
-                if (despuesDeElemento == null) manoTarget.appendChild(activeTile);
-                else manoTarget.insertBefore(activeTile, despuesDeElemento);
-
+                if (despuesDeElemento == null) manoTarget.appendChild(activeTile); else manoTarget.insertBefore(activeTile, despuesDeElemento);
                 if (juegoIniciado && !juegoTerminado) {
-                    if (!verificarVictoria()) {
-                        const jugId = ordenJugadores[indiceTurnoActual];
-                        if (!tieneJugadaValida(jugId)) {
-                            pasesConsecutivos++;
-                            setTimeout(() => { alert(`Jugador ${jugId.replace('mano-', '')} se quedó sin fichas. ¡Pasa!`); avanzarTurno(); }, 400);
-                        }
-                    }
+                    if (!verificarVictoria()) { const jugId = ordenJugadores[indiceTurnoActual]; if (!tieneJugadaValida(jugId)) { pasesConsecutivos++; setTimeout(() => { alert(`Jugador ${jugId.replace('mano-', '')} se quedó sin fichas. ¡Pasa!`); avanzarTurno(); }, 400); } }
                 }
             }
 
-            cloneTile.remove();
-            cloneTile = null;
-            if(activeTile) activeTile.style.opacity = '1';
-            activeTile = null;
+            cloneTile.remove(); cloneTile = null; if(activeTile) activeTile.style.opacity = '1'; activeTile = null;
         }
 
-        document.addEventListener('pointerdown', handlePointerDown, { passive: false });
-        document.addEventListener('pointermove', handlePointerMove, { passive: false });
-        document.addEventListener('pointerup', handlePointerUp);
-        document.addEventListener('pointercancel', handlePointerUp); 
-
-        // Permite zoom si se usan dos dedos, bloquea scroll si se arrastra una ficha
-        window.addEventListener('touchmove', function(event) { 
-            if(event.touches && event.touches.length > 1) return;
-            if(event.target.closest('.ficha')) event.preventDefault(); 
-        }, {passive: false});
+        document.addEventListener('pointerdown', handlePointerDown, { passive: false }); document.addEventListener('pointermove', handlePointerMove, { passive: false });
+        document.addEventListener('pointerup', handlePointerUp); document.addEventListener('pointercancel', handlePointerUp); 
+        window.addEventListener('touchmove', function(event) { if(event.touches && event.touches.length > 1) return; if(event.target.closest('.ficha')) event.preventDefault(); }, {passive: false});
 
         // =====================================================================
-        // LÓGICA DEL JUEGO
+        // LÓGICA E INTELIGENCIA DEL JUEGO
         // =====================================================================
         let timerAyuda;
-        function mostrarAyuda(texto) {
-            const barra = document.getElementById('texto-ayuda');
-            barra.innerText = texto; barra.style.opacity = 1;
-            clearTimeout(timerAyuda); timerAyuda = setTimeout(() => { barra.style.opacity = 0; }, 3500);
-        }
+        function mostrarAyuda(texto) { const barra = document.getElementById('texto-ayuda'); barra.innerText = texto; barra.style.opacity = 1; clearTimeout(timerAyuda); timerAyuda = setTimeout(() => { barra.style.opacity = 0; }, 3500); }
 
         const posicionesPuntos = { 0:[], 1:[4], 2:[2,6], 3:[2,4,6], 4:[0,2,6,8], 5:[0,2,4,6,8], 6:[0,2,3,5,6,8] };
         const ordenJugadores = ['mano-sur', 'mano-este', 'mano-norte', 'mano-oeste'];
@@ -304,15 +232,12 @@
         let indiceTurnoActual = -1; let pasesConsecutivos = 0; let fichaEnEspera = null; 
         let historialJugadas = []; let puntosNosotros = 0; let puntosEllos = 0;
 
-        function ejecutarSimulacionMonteCarlo() {
-            if (!juegoIniciado || juegoTerminado) { alert("La simulación solo funciona durante una partida activa."); return; }
-            const ITERACIONES = 1000; let victoriasUs = 0; let victoriasThem = 0; let empates = 0;
-            let manosBases = [[], [], [], []];
-            ordenJugadores.forEach((id, idx) => { document.getElementById(id).querySelectorAll('.ficha').forEach(f => { manosBases[idx].push({ v1: parseInt(f.dataset.v1), v2: parseInt(f.dataset.v2) }); }); });
-
-            for (let i = 0; i < ITERACIONES; i++) {
-                let extIzq = extremoIzquierdo; let extDer = extremoDerecho; let turnoAct = indiceTurnoActual; let pases = pasesConsecutivos;
-                let manosSim = [ [...manosBases[0]], [...manosBases[1]], [...manosBases[2]], [...manosBases[3]] ];
+        // MOTOR CENTRAL DE MONTECARLO (Reutilizable para Simulación y Sugerencias)
+        function correrSimulacionCore(manosIniciales, extIzqInicial, extDerInicial, turnoInicial, pasesIniciales, iteraciones) {
+            let victoriasUs = 0; let victoriasThem = 0; let empates = 0;
+            for (let i = 0; i < iteraciones; i++) {
+                let extIzq = extIzqInicial; let extDer = extDerInicial; let turnoAct = turnoInicial; let pases = pasesIniciales;
+                let manosSim = [ [...manosIniciales[0]], [...manosIniciales[1]], [...manosIniciales[2]], [...manosIniciales[3]] ];
                 let simTerminada = false;
 
                 while (!simTerminada) {
@@ -340,8 +265,23 @@
                     turnoAct = (turnoAct + 1) % 4; 
                 }
             }
+            return { victoriasUs, victoriasThem, empates };
+        }
 
-            let pctUs = ((victoriasUs / ITERACIONES) * 100).toFixed(1); let pctThem = ((victoriasThem / ITERACIONES) * 100).toFixed(1); let pctEmpates = ((empates / ITERACIONES) * 100).toFixed(1);
+        function extraerManosActuales() {
+            let manosBases = [[], [], [], []];
+            ordenJugadores.forEach((id, idx) => { document.getElementById(id).querySelectorAll('.ficha').forEach(f => { manosBases[idx].push({ v1: parseInt(f.dataset.v1), v2: parseInt(f.dataset.v2) }); }); });
+            return manosBases;
+        }
+
+        // SIMULACIÓN GLOBAL (5,000 iteraciones)
+        function ejecutarSimulacionMonteCarlo() {
+            if (!juegoIniciado || juegoTerminado) return;
+            const ITERACIONES = 5000; 
+            let manosBases = extraerManosActuales();
+            let res = correrSimulacionCore(manosBases, extremoIzquierdo, extremoDerecho, indiceTurnoActual, pasesConsecutivos, ITERACIONES);
+
+            let pctUs = ((res.victoriasUs / ITERACIONES) * 100).toFixed(1); let pctThem = ((res.victoriasThem / ITERACIONES) * 100).toFixed(1); let pctEmpates = ((res.empates / ITERACIONES) * 100).toFixed(1);
             document.getElementById('sim-nosotros').innerText = pctUs; document.getElementById('sim-ellos').innerText = pctThem; document.getElementById('sim-empates').innerText = pctEmpates;
             let barraHTML = "";
             if(pctUs > 0) barraHTML += `<div class="barra-nosotros" style="width:${pctUs}%;">${pctUs}%</div>`;
@@ -351,9 +291,68 @@
             document.getElementById('modal-simulacion').style.display = 'flex';
         }
 
+        // IA SUGERENCIA DE JUGADA
+        function sugerirMejorJugada() {
+            if (!juegoIniciado || juegoTerminado) return;
+            limpiarSugerencias();
+
+            let manosBases = extraerManosActuales();
+            let manoJugador = manosBases[indiceTurnoActual];
+            let jugadasValidas = [];
+            let domFichas = document.getElementById(ordenJugadores[indiceTurnoActual]).querySelectorAll('.ficha');
+
+            // Detectar jugadas legales
+            for (let i = 0; i < manoJugador.length; i++) {
+                let ficha = manoJugador[i]; let domId = domFichas[i].id;
+                if (ficha.v1 === extremoIzquierdo || ficha.v2 === extremoIzquierdo) jugadasValidas.push({ index: i, lado: 'izq', f: ficha, id: domId });
+                if (ficha.v1 === extremoDerecho || ficha.v2 === extremoDerecho) jugadasValidas.push({ index: i, lado: 'der', f: ficha, id: domId });
+            }
+
+            if (jugadasValidas.length === 0) { alert("No tienes jugadas válidas. Debes pasar."); return; }
+            if (jugadasValidas.length === 1) { 
+                document.getElementById(jugadasValidas[0].id).classList.add('ficha-sugerida'); 
+                actualizarMarcadorInfo(`💡 Única jugada posible`); return; 
+            }
+
+            actualizarMarcadorInfo("🤖 Analizando opciones...");
+
+            // Evaluar cada rama de decisión (con un ligero timeout para que la interfaz se actualice)
+            setTimeout(() => {
+                let mejorJugada = null; let mejorProbabilidad = -1;
+                
+                for (let jugada of jugadasValidas) {
+                    let manosSim = [ [...manosBases[0]], [...manosBases[1]], [...manosBases[2]], [...manosBases[3]] ];
+                    manosSim[indiceTurnoActual].splice(jugada.index, 1);
+
+                    let extIzqSim = extremoIzquierdo; let extDerSim = extremoDerecho;
+                    if (jugada.lado === 'izq') extIzqSim = (jugada.f.v1 === extremoIzquierdo) ? jugada.f.v2 : jugada.f.v1;
+                    else extDerSim = (jugada.f.v2 === extremoDerecho) ? jugada.f.v1 : jugada.f.v2;
+
+                    let nextTurno = (indiceTurnoActual + 1) % 4;
+                    // 2000 iteraciones por CADA opción para decidir
+                    let res = correrSimulacionCore(manosSim, extIzqSim, extDerSim, nextTurno, 0, 2000);
+
+                    let probWin = (indiceTurnoActual === 0 || indiceTurnoActual === 2) ? (res.victoriasUs / 2000) : (res.victoriasThem / 2000);
+                    if (probWin > mejorProbabilidad) { mejorProbabilidad = probWin; mejorJugada = jugada; }
+                }
+
+                if (mejorJugada) {
+                    document.getElementById(mejorJugada.id).classList.add('ficha-sugerida');
+                    let probPct = (mejorProbabilidad * 100).toFixed(1);
+                    actualizarMarcadorInfo(`💡 Juega el [${mejorJugada.f.v1}|${mejorJugada.f.v2}] (${probPct}% éxito)`);
+                }
+            }, 50);
+        }
+
+        function limpiarSugerencias() {
+            document.querySelectorAll('.ficha-sugerida').forEach(el => el.classList.remove('ficha-sugerida'));
+        }
+
         function actualizarBotonesControl() {
             document.getElementById('btn-deshacer').disabled = (historialJugadas.length === 0);
-            document.getElementById('btn-simular').disabled = (!juegoIniciado || juegoTerminado);
+            let bloqueado = (!juegoIniciado || juegoTerminado);
+            document.getElementById('btn-simular').disabled = bloqueado;
+            document.getElementById('btn-sugerir').disabled = bloqueado;
         }
 
         function guardarEjercicioActual() {
@@ -380,6 +379,7 @@
         }
 
         function cargarEjercicio(nombre, datosGuardados) {
+            limpiarSugerencias();
             document.querySelectorAll('.ficha').forEach(f => f.remove()); ordenJugadores.forEach(id => document.getElementById(id).classList.remove('turno-activo'));
             juegoIniciado = datosGuardados.juegoIniciado; juegoTerminado = datosGuardados.juegoTerminado; extremoIzquierdo = datosGuardados.extremoIzquierdo; extremoDerecho = datosGuardados.extremoDerecho; indiceTurnoActual = datosGuardados.indiceTurnoActual; pasesConsecutivos = datosGuardados.pasesConsecutivos; puntosNosotros = datosGuardados.puntosNosotros || 0; puntosEllos = datosGuardados.puntosEllos || 0;
             historialJugadas = datosGuardados.historial ? JSON.parse(JSON.stringify(datosGuardados.historial)) : [];
@@ -418,10 +418,11 @@
             if (juegoTerminado) return; const manoPadreId = elementoFicha.parentElement.id;
             if (juegoIniciado && manoPadreId !== ordenJugadores[indiceTurnoActual]) { alert("No es su turno"); return; }
             let v1 = parseInt(elementoFicha.dataset.v1), v2 = parseInt(elementoFicha.dataset.v2);
-            if (!juegoIniciado) { registrarHistorial(elementoFicha, manoPadreId); ejecutarJugadaFisica(elementoFicha, 'inicio', v1, v2); juegoIniciado = true; indiceTurnoActual = ordenJugadores.indexOf(manoPadreId); avanzarTurno(); return; }
+            if (!juegoIniciado) { limpiarSugerencias(); registrarHistorial(elementoFicha, manoPadreId); ejecutarJugadaFisica(elementoFicha, 'inicio', v1, v2); juegoIniciado = true; indiceTurnoActual = ordenJugadores.indexOf(manoPadreId); avanzarTurno(); return; }
             let calzaIzq = (v1 === extremoIzquierdo || v2 === extremoIzquierdo), calzaDer = (v1 === extremoDerecho || v2 === extremoDerecho);
             if (!calzaIzq && !calzaDer) return;
             if (calzaIzq && calzaDer && ladoElegido === null) { fichaEnEspera = elementoFicha; document.getElementById('modal-decision').style.display = 'flex'; return; }
+            limpiarSugerencias();
             registrarHistorial(elementoFicha, manoPadreId);
             if (ladoElegido) ejecutarJugadaFisica(elementoFicha, ladoElegido, v1, v2); else if (calzaIzq) ejecutarJugadaFisica(elementoFicha, 'izq', v1, v2); else if (calzaDer) ejecutarJugadaFisica(elementoFicha, 'der', v1, v2);
             avanzarTurno();
@@ -439,7 +440,9 @@
         }
 
         function deshacerJugada() {
-            if (historialJugadas.length === 0) return; let jugada = historialJugadas.pop();
+            if (historialJugadas.length === 0) return; 
+            limpiarSugerencias();
+            let jugada = historialJugadas.pop();
             extremoIzquierdo = jugada.prevIzq; extremoDerecho = jugada.prevDer; indiceTurnoActual = jugada.prevTurno; juegoIniciado = jugada.prevIniciado; pasesConsecutivos = jugada.prevPases; juegoTerminado = false;
             let ficha = document.getElementById(jugada.idFicha); ficha.draggable = true; ficha.style.cursor = 'grab'; ficha.style.margin = '0'; ficha.classList.remove('doble');
             ficha.dataset.v1 = jugada.prevV1; ficha.dataset.v2 = jugada.prevV2;
@@ -491,9 +494,10 @@
         function generarIdFichaOriginal(i) { return `f_${i}_${Math.random().toString(36).substr(2, 9)}`; }
 
         function iniciarMano() {
+            limpiarSugerencias();
             document.querySelectorAll('.ficha').forEach(f => f.remove()); ordenJugadores.forEach(id => document.getElementById(id).classList.remove('turno-activo'));
             juegoIniciado = false; juegoTerminado = false; extremoIzquierdo = null; extremoDerecho = null; indiceTurnoActual = -1; pasesConsecutivos = 0; historialJugadas = []; 
-            actualizarBotonesControl(); actualizarMarcadorInfo("Arrastra o haz Doble Toque");
+            actualizarBotonesControl(); actualizarMarcadorInfo("Arrastre libre o Doble Toque");
             let todasLasFichas = []; for (let i = 0; i <= 6; i++) { for (let j = i; j <= 6; j++) { todasLasFichas.push([i, j]); } }
             for (let i = todasLasFichas.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [todasLasFichas[i], todasLasFichas[j]] = [todasLasFichas[j], todasLasFichas[i]]; }
             const manos = { 'mano-sur': todasLasFichas.splice(0, 7), 'mano-este': todasLasFichas.splice(0, 7), 'mano-norte': todasLasFichas.splice(0, 7), 'mano-oeste': todasLasFichas.splice(0, 7) };

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Simulador de Dominó PRO - Modo Laboratorio Total</title>
+    <title>Simulador de Dominó PRO - Perfiles de Usuario</title>
 
     <style>
         /* --- ESTILOS VISUALES Y LAYOUT --- */
@@ -43,14 +43,14 @@
         .btn-secundario { background-color: #2196F3; }
         #btn-deshacer { background-color: #9c27b0; } 
         #btn-pasar { background-color: #f44336; border: 1px solid #b71c1c; }
+        #btn-perfil { background-color: #333; border: 1px solid #777; color: gold; }
         
         #btn-deshacer:disabled, #btn-sugerir:disabled, #btn-simular:disabled, #btn-pasar:disabled { background-color: #555; color: #aaa; border: none; box-shadow: none;}
         #btn-simular { background-color: #009688; border: 1px solid #004d40; }
         #btn-sugerir { background-color: #4CAF50; border: 1px solid #1B5E20; color: white;}
         #btn-reset-puntos { background-color: #d32f2f; }
         
-        /* BOTONES MODO PREPARACIÓN */
-        .btn-prep-ocultas { background-color: #E91E63; border: 1px solid #880E4F; }
+        .btn-prep-accion { background-color: #E91E63; border: 1px solid #880E4F; }
         .btn-prep-visibles { background-color: #00BCD4; border: 1px solid #0097A7; }
         .btn-prep-jugar { background-color: #9C27B0; border: 1px solid #4A148C; }
         .btn-prep-cancelar { background-color: #757575; }
@@ -89,7 +89,7 @@
         #pozo .ficha { width: 34px; height: 17px; flex-direction: row; margin: 1px; cursor: pointer; }
         #pozo .linea-divisoria { width: 1px; height: 85%; margin: auto 0; }
 
-        /* --- FICHAS BASE (MÓVIL) --- */
+        /* --- FICHAS --- */
         .ficha {
             width: 26px; height: 52px; background-color: white; border-radius: 4px;
             box-shadow: 1px 1px 3px rgba(0,0,0,0.5); display: flex; flex-direction: column;
@@ -128,21 +128,22 @@
 
         /* --- MODALES --- */
         .modal-fondo { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center; }
+        
+        /* Modal Especial para Login (Fondo completo oscuro) */
+        #modal-login { background: #1a5310; z-index: 9999; }
+        
         .modal-contenido { background: #222; color: white; padding: 15px; border-radius: 10px; text-align: center; border: 2px solid gold; width: 85%; max-width: 400px; max-height: 85vh; overflow-y: auto;}
         .modal-botones { display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
         .btn-decision { background: #277714; font-size: 13px; padding: 8px; color: white; border: none; border-radius: 5px; flex: 1; cursor: pointer;}
         
         textarea { width: 100%; height: 150px; background: #333; color: white; border: 1px solid #555; border-radius: 5px; padding: 10px; font-family: monospace; resize: none; margin-top: 10px; box-sizing: border-box;}
-        input[type="text"] { width: 100%; padding: 10px; background: #333; color: white; border: 1px solid #555; border-radius: 5px; margin-bottom: 10px; box-sizing: border-box;}
+        input[type="text"] { width: 100%; padding: 10px; background: #333; color: white; border: 1px solid #555; border-radius: 5px; margin-bottom: 10px; box-sizing: border-box; font-size:14px; text-align: center;}
 
         .barra-prob { width: 100%; height: 15px; background: #555; border-radius: 8px; overflow: hidden; display: flex; margin-top: 10px;}
         .barra-nosotros { background: lime; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; color: black;}
         .barra-ellos { background: red; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; color: white;}
         .barra-empate { background: gray; height: 100%; }
 
-        /* ================================================================= */
-        /* --- ADAPTACIÓN RESPONSIVA PARA COMPUTADORAS --- */
-        /* ================================================================= */
         @media (min-width: 768px) {
             #zona-juego { grid-template-columns: 120px 1fr 120px; grid-template-rows: 110px 1fr 110px; padding: 15px; }
             #info-juego { font-size: 16px; padding: 6px 18px; }
@@ -163,6 +164,8 @@
     <header id="barra-superior">
         <div id="controles">
             <div class="botones-wrap">
+                <button id="btn-perfil" ontouchstart="mostrarAyuda('Cambiar de usuario')" onmouseenter="mostrarAyuda('Cambiar de usuario')" onclick="cerrarSesion()">👤 Ingresando...</button>
+                
                 <button class="btn-juego" ontouchstart="mostrarAyuda('🎲 Juega una partida aleatoria')" onmouseenter="mostrarAyuda('🎲 Juega una partida aleatoria')" onclick="repartirAzar()">🎲 Al Azar</button>
                 <button class="btn-juego btn-secundario" ontouchstart="mostrarAyuda('✋ Entrar al laboratorio de escenarios')" onmouseenter="mostrarAyuda('✋ Entrar al laboratorio de escenarios')" onclick="iniciarPreparacion()">✋ Manual</button>
                 <button class="btn-juego btn-texto" ontouchstart="mostrarAyuda('📋 Pega un escenario desde texto')" onmouseenter="mostrarAyuda('📋 Pega un escenario desde texto')" onclick="abrirModalImportar()">📋 Pegar</button>
@@ -192,12 +195,23 @@
         </div>
     </header>
 
+    <div id="modal-login" class="modal-fondo">
+        <div class="modal-contenido">
+            <h2 style="margin-top:0; color: gold;">♟️ Laboratorio PRO</h2>
+            <p style="font-size: 13px; color: #ccc; text-align: center; margin-bottom: 15px;">
+                Identifícate para acceder a tu propia base de datos de jugadas.
+            </p>
+            <input type="text" id="input-usuario" placeholder="Ingresa tu Nombre o Apodo" autocomplete="off">
+            <div class="modal-botones">
+                <button class="btn-decision" style="background: #009688; font-size: 16px;" onclick="iniciarSesion()">Entrar</button>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-exportar" class="modal-fondo">
         <div class="modal-contenido">
             <h3 style="margin-top:0;">📤 Reporte de Partida</h3>
-            <p style="font-size: 12px; color: #aaa; text-align: left; margin-bottom: 5px;">
-                Copia este texto para guardarlo. Contiene las manos iniciales y el historial de jugadas.
-            </p>
+            <p style="font-size: 12px; color: #aaa; text-align: left; margin-bottom: 5px;">Copia este texto para guardarlo. Contiene las manos iniciales y el historial de jugadas.</p>
             <textarea id="texto-exportar" readonly></textarea>
             <div class="modal-botones">
                 <button class="btn-decision" style="background: #009688;" onclick="copiarPortapapeles()">Copiar al Portapapeles</button>
@@ -209,15 +223,10 @@
     <div id="modal-guardar" class="modal-fondo">
         <div class="modal-contenido">
             <h3 style="margin-top:0;">💾 Guardar Ejercicio</h3>
-            <p style="font-size: 12px; color: #aaa; text-align: left; margin-bottom: 10px;">
-                Asigna primero la categoría y luego el nombre de tu ejercicio.
-            </p>
-            
+            <p style="font-size: 12px; color: #aaa; text-align: left; margin-bottom: 10px;">Asigna primero la categoría y luego el nombre de tu ejercicio.</p>
             <input type="text" id="input-categoria-ejercicio" placeholder="1. Selecciona o escribe una categoría" list="lista-categorias">
             <datalist id="lista-categorias"></datalist>
-            
             <input type="text" id="input-nombre-ejercicio" placeholder="2. Nombre del escenario (ej: Salida Doble 6)">
-            
             <div class="modal-botones">
                 <button class="btn-decision" style="background: #E91E63;" onclick="confirmarGuardar()">Guardar Ejercicio</button>
                 <button class="btn-decision" style="background: #555;" onclick="document.getElementById('modal-guardar').style.display='none'">Cancelar</button>
@@ -228,10 +237,7 @@
     <div id="modal-importar" class="modal-fondo">
         <div class="modal-contenido">
             <h3 style="margin-top:0;">📋 Pegar Escenario</h3>
-            <p style="font-size: 12px; color: #aaa; text-align: left; margin-bottom: 5px;">
-                Escribe una línea por jugador. Las fichas no asignadas irán al Pozo invisible.<br>
-                <span style="color:#ff9800;">Ej: Sur: 6-6, 6-5 | Norte: 44, 33</span>
-            </p>
+            <p style="font-size: 12px; color: #aaa; text-align: left; margin-bottom: 5px;">Escribe una línea por jugador. Las fichas no asignadas irán al Pozo invisible.<br><span style="color:#ff9800;">Ej: Sur: 6-6, 6-5 | Norte: 44, 33</span></p>
             <textarea id="texto-importar" placeholder="Pega tu texto aquí..."></textarea>
             <div class="modal-botones">
                 <button class="btn-decision" style="background: #009688;" onclick="procesarTextoImportado()">Cargar al Tablero</button>
@@ -246,9 +252,7 @@
         <div class="modal-contenido" style="text-align: left;">
             <h3 style="margin-top:0; text-align: center;">📂 Mi Laboratorio</h3>
             <div id="lista-ejercicios-contenedor"></div>
-            <div class="modal-botones">
-                <button class="btn-decision" onclick="document.getElementById('modal-cargar').style.display='none'" style="background: #555;">Cerrar</button>
-            </div>
+            <div class="modal-botones"><button class="btn-decision" onclick="document.getElementById('modal-cargar').style.display='none'" style="background: #555;">Cerrar</button></div>
         </div>
     </div>
     
@@ -269,18 +273,50 @@
 
     <script>
         // =====================================================================
+        // SISTEMA DE PERFILES DE USUARIO
+        // =====================================================================
+        let usuarioActual = localStorage.getItem('dominoUsuarioActivo');
+
+        function verificarSesion() {
+            if (!usuarioActual) {
+                document.getElementById('modal-login').style.display = 'flex';
+                document.getElementById('input-usuario').focus();
+            } else {
+                document.getElementById('modal-login').style.display = 'none';
+                document.getElementById('btn-perfil').innerHTML = `👤 ${usuarioActual} (Salir)`;
+            }
+        }
+
+        function iniciarSesion() {
+            let nombre = document.getElementById('input-usuario').value.trim().toUpperCase();
+            if (!nombre) { alert("Por favor, ingresa tu nombre."); return; }
+            usuarioActual = nombre;
+            localStorage.setItem('dominoUsuarioActivo', usuarioActual);
+            verificarSesion();
+            pantallaDeInicio();
+        }
+
+        function cerrarSesion() {
+            if(confirm(`¿Deseas cerrar la sesión de ${usuarioActual}?`)) {
+                usuarioActual = null;
+                localStorage.removeItem('dominoUsuarioActivo');
+                pantallaDeInicio();
+                verificarSesion();
+            }
+        }
+
+        function getStorageKey() {
+            return 'secuenciasDomino_' + usuarioActual;
+        }
+
+        // =====================================================================
         // EXPORTAR A TEXTO
         // =====================================================================
         function abrirModalExportar() {
             let texto = "=== DISTRIBUCIÓN INICIAL ===\n";
             let manosIniciales = { 'mano-sur': [], 'mano-este': [], 'mano-norte': [], 'mano-oeste': [] };
-            
-            ordenJugadores.forEach(id => {
-                document.getElementById(id).querySelectorAll('.ficha').forEach(f => { manosIniciales[id].push(`[${f.dataset.v1}-${f.dataset.v2}]`); });
-            });
-            historialJugadas.forEach(jugada => {
-                if (!jugada.esPase && jugada.origen) { manosIniciales[jugada.origen].push(`[${jugada.prevV1}-${jugada.prevV2}]`); }
-            });
+            ordenJugadores.forEach(id => { document.getElementById(id).querySelectorAll('.ficha').forEach(f => { manosIniciales[id].push(`[${f.dataset.v1}-${f.dataset.v2}]`); }); });
+            historialJugadas.forEach(jugada => { if (!jugada.esPase && jugada.origen) { manosIniciales[jugada.origen].push(`[${jugada.prevV1}-${jugada.prevV2}]`); } });
 
             texto += `SUR: ${manosIniciales['mano-sur'].length > 0 ? manosIniciales['mano-sur'].join(', ') : '(Vacío)'}\n`;
             texto += `ESTE: ${manosIniciales['mano-este'].length > 0 ? manosIniciales['mano-este'].join(', ') : '(Vacío)'}\n`;
@@ -303,38 +339,21 @@
                     else { texto += `${i + 1}. ${nombreJugador} -> Juega [${jugada.prevV1}-${jugada.prevV2}]\n`; }
                 });
             }
-            
             document.getElementById('texto-exportar').value = texto; document.getElementById('modal-exportar').style.display = 'flex';
         }
 
-        function copiarPortapapeles() {
-            let textarea = document.getElementById('texto-exportar');
-            textarea.select(); document.execCommand('copy'); alert("¡Reporte copiado al portapapeles!");
-        }
+        function copiarPortapapeles() { let textarea = document.getElementById('texto-exportar'); textarea.select(); document.execCommand('copy'); alert("¡Reporte copiado al portapapeles!"); }
 
         // =====================================================================
-        // TRADUCTOR DE TEXTO Y CATEGORÍAS SUGERIDAS (NUEVO DICCIONARIO)
+        // TRADUCTOR DE TEXTO Y CATEGORÍAS (LIGADO AL USUARIO)
         // =====================================================================
         function abrirModalGuardar() {
-            let memoria = JSON.parse(localStorage.getItem('secuenciasDomino') || '{}');
-            
-            // Diccionario Base del Profesional
-            let categorias = new Set([
-                "Salidas complicadas", 
-                "Salida con doble en tercera", 
-                "Cuadros al revés", 
-                "Trancas forzadas",
-                "Defensa del salidor",
-                "Castigo al salidor"
-            ]);
-            
+            let memoria = JSON.parse(localStorage.getItem(getStorageKey()) || '{}');
+            let categorias = new Set(["Salidas complicadas", "Salida con doble en tercera", "Cuadros al revés", "Trancas forzadas", "Defensa del salidor", "Castigo al salidor"]);
             for(let key in memoria) { if(memoria[key].categoria) categorias.add(memoria[key].categoria); }
-            
             let datalist = document.getElementById('lista-categorias'); datalist.innerHTML = '';
             categorias.forEach(c => { let opt = document.createElement('option'); opt.value = c; datalist.appendChild(opt); });
-            
-            document.getElementById('input-nombre-ejercicio').value = ''; 
-            document.getElementById('input-categoria-ejercicio').value = '';
+            document.getElementById('input-nombre-ejercicio').value = ''; document.getElementById('input-categoria-ejercicio').value = '';
             document.getElementById('modal-guardar').style.display = 'flex';
         }
 
@@ -353,16 +372,16 @@
             document.getElementById('mesa').querySelectorAll('.ficha').forEach(f => { estadoJuego.mesa.push({ idOriginal: f.id, v1: f.dataset.v1, v2: f.dataset.v2, esDoble: f.classList.contains('doble') }); });
             document.getElementById('pozo').querySelectorAll('.ficha').forEach(f => { estadoJuego.pozo.push({ idOriginal: f.id, v1: f.dataset.v1, v2: f.dataset.v2 }); });
             
-            let ejerciciosMemoria = JSON.parse(localStorage.getItem('secuenciasDomino') || '{}'); 
-            ejerciciosMemoria[nombre] = estadoJuego; localStorage.setItem('secuenciasDomino', JSON.stringify(ejerciciosMemoria)); 
+            let ejerciciosMemoria = JSON.parse(localStorage.getItem(getStorageKey()) || '{}'); 
+            ejerciciosMemoria[nombre] = estadoJuego; localStorage.setItem(getStorageKey(), JSON.stringify(ejerciciosMemoria)); 
             document.getElementById('modal-guardar').style.display = 'none'; alert(`¡Guardado en la categoría [${categoria}]!`);
         }
 
         function abrirModalCargar() {
-            let ejerciciosMemoria = JSON.parse(localStorage.getItem('secuenciasDomino') || '{}');
+            let ejerciciosMemoria = JSON.parse(localStorage.getItem(getStorageKey()) || '{}');
             let contenedor = document.getElementById('lista-ejercicios-contenedor'); contenedor.innerHTML = '';
             if (Object.keys(ejerciciosMemoria).length === 0) { 
-                contenedor.innerHTML = '<div style="text-align: center; color: #aaa; margin-top:20px;">No hay escenarios guardados</div>'; 
+                contenedor.innerHTML = '<div style="text-align: center; color: #aaa; margin-top:20px;">Tu laboratorio está vacío</div>'; 
             } else {
                 let porCategoria = {};
                 for (let nombre in ejerciciosMemoria) {
@@ -370,18 +389,15 @@
                     if (!porCategoria[cat]) porCategoria[cat] = []; porCategoria[cat].push(nombre);
                 }
                 for (let cat in porCategoria) {
-                    let h4 = document.createElement('h4'); h4.innerText = `📁 ${cat}`;
-                    h4.style.margin = '15px 0 5px 0'; h4.style.color = '#ff9800'; h4.style.borderBottom = '1px solid #555'; h4.style.paddingBottom = '3px';
-                    contenedor.appendChild(h4);
+                    let h4 = document.createElement('h4'); h4.innerText = `📁 ${cat}`; h4.style.margin = '15px 0 5px 0'; h4.style.color = '#ff9800'; h4.style.borderBottom = '1px solid #555'; h4.style.paddingBottom = '3px'; contenedor.appendChild(h4);
                     let ul = document.createElement('ul'); ul.style.listStyle = 'none'; ul.style.padding = '0'; ul.style.margin = '0';
                     porCategoria[cat].forEach(nombre => {
                         let li = document.createElement('li');
                         li.style.background = '#333'; li.style.padding = '8px'; li.style.marginBottom = '5px'; li.style.borderRadius = '5px'; li.style.display = 'flex'; li.style.justifyContent = 'space-between'; li.style.alignItems = 'center'; li.style.fontSize = '13px';
                         let texto = document.createElement('span'); texto.innerHTML = `<strong>${nombre}</strong>`; texto.style.flexGrow = "1"; texto.style.cursor = 'pointer';
                         texto.onclick = () => cargarEjercicio(nombre, ejerciciosMemoria[nombre]);
-                        let btnBorrar = document.createElement('button'); btnBorrar.innerHTML = '🗑️';
-                        btnBorrar.style.background = 'transparent'; btnBorrar.style.color = '#ff5252'; btnBorrar.style.padding = '2px'; btnBorrar.style.fontSize = '14px'; btnBorrar.style.border = 'none'; btnBorrar.style.boxShadow = 'none'; btnBorrar.style.cursor = 'pointer';
-                        btnBorrar.onclick = (e) => { e.stopPropagation(); if(confirm(`¿Borrar el escenario "${nombre}"?`)){ delete ejerciciosMemoria[nombre]; localStorage.setItem('secuenciasDomino', JSON.stringify(ejerciciosMemoria)); abrirModalCargar(); } };
+                        let btnBorrar = document.createElement('button'); btnBorrar.innerHTML = '🗑️'; btnBorrar.style.background = 'transparent'; btnBorrar.style.color = '#ff5252'; btnBorrar.style.padding = '2px'; btnBorrar.style.fontSize = '14px'; btnBorrar.style.border = 'none'; btnBorrar.style.boxShadow = 'none'; btnBorrar.style.cursor = 'pointer';
+                        btnBorrar.onclick = (e) => { e.stopPropagation(); if(confirm(`¿Borrar el escenario "${nombre}"?`)){ delete ejerciciosMemoria[nombre]; localStorage.setItem(getStorageKey(), JSON.stringify(ejerciciosMemoria)); abrirModalCargar(); } };
                         li.appendChild(texto); li.appendChild(btnBorrar); ul.appendChild(li);
                     });
                     contenedor.appendChild(ul);
@@ -394,9 +410,7 @@
 
         function procesarTextoImportado() {
             let texto = document.getElementById('texto-importar').value.toLowerCase();
-            let lineas = texto.split('\n'); 
-            let asignaciones = { 'mano-sur': [], 'mano-norte': [], 'mano-este': [], 'mano-oeste': [] };
-            
+            let lineas = texto.split('\n'); let asignaciones = { 'mano-sur': [], 'mano-norte': [], 'mano-este': [], 'mano-oeste': [] };
             for(let linea of lineas) {
                 let idMano = null;
                 if (linea.includes('sur') || linea.match(/^s\b/)) idMano = 'mano-sur'; 
@@ -404,28 +418,18 @@
                 else if ((linea.includes('este') && !linea.includes('oeste')) || linea.match(/^e\b/)) idMano = 'mano-este'; 
                 else if (linea.includes('oeste') || linea.match(/^o\b/)) idMano = 'mano-oeste';
                 
-                if (idMano) {
-                    let regex = /([0-6])\s*[-_,|./:]?\s*([0-6])/g;
-                    let match;
-                    while ((match = regex.exec(linea)) !== null) {
-                        let v1 = parseInt(match[1]); let v2 = parseInt(match[2]); 
-                        asignaciones[idMano].push([Math.max(v1,v2), Math.min(v1,v2)]); 
-                    }
-                }
+                if (idMano) { let regex = /([0-6])\s*[-_,|./:]?\s*([0-6])/g; let match; while ((match = regex.exec(linea)) !== null) { let v1 = parseInt(match[1]); let v2 = parseInt(match[2]); asignaciones[idMano].push([Math.max(v1,v2), Math.min(v1,v2)]); } }
             }
             
-            pantallaDeInicio(); document.getElementById('mesa').innerHTML = '';
-            let fichasUsadas = new Set(); let error = false;
+            pantallaDeInicio(); document.getElementById('mesa').innerHTML = ''; let fichasUsadas = new Set(); let error = false;
 
             for (let id in asignaciones) {
                 let contenedor = document.getElementById(id);
                 if (asignaciones[id].length > 7) { alert(`El jugador ${id.replace('mano-', '').toUpperCase()} tiene más de 7 fichas. Se cortarán las extras.`); }
                 let count = 0;
                 for (let f of asignaciones[id]) {
-                    if (count >= 7) break;
-                    let fKey = f[0] + "-" + f[1];
-                    if (!fichasUsadas.has(fKey)) { fichasUsadas.add(fKey); contenedor.appendChild(crearFichaVisual(f[0], f[1], generarIdFichaOriginal(fKey))); count++; } 
-                    else { error = true; }
+                    if (count >= 7) break; let fKey = f[0] + "-" + f[1];
+                    if (!fichasUsadas.has(fKey)) { fichasUsadas.add(fKey); contenedor.appendChild(crearFichaVisual(f[0], f[1], generarIdFichaOriginal(fKey))); count++; } else { error = true; }
                 }
             }
             
@@ -441,9 +445,7 @@
             
             document.getElementById('modal-importar').style.display = 'none'; actualizarVisibilidadPozo();
             document.getElementById('mesa').innerHTML = '<div id="info-juego">Importación Exitosa. Salida de Sur.</div>';
-            modoPreparacion = false; juegoIniciado = false; indiceTurnoActual = 0; 
-            toggleModoPrep(false); document.getElementById('mano-sur').classList.add('turno-activo');
-            actualizarBotonesControl();
+            modoPreparacion = false; juegoIniciado = false; indiceTurnoActual = 0; toggleModoPrep(false); document.getElementById('mano-sur').classList.add('turno-activo'); actualizarBotonesControl();
         }
 
         // =====================================================================
@@ -452,10 +454,7 @@
         let activeTile = null; let cloneTile = null; let offsetX = 0; let offsetY = 0; let lastTapTime = 0;
         let modoPreparacion = false; let fichasJugadasPor = { 'mano-sur': 0, 'mano-este': 0, 'mano-norte': 0, 'mano-oeste': 0 };
 
-        function actualizarVisibilidadPozo() {
-            const cont = document.getElementById('contenedor-pozo');
-            cont.style.display = (!modoPreparacion && document.getElementById('pozo').children.length > 0) ? 'block' : 'none';
-        }
+        function actualizarVisibilidadPozo() { const cont = document.getElementById('contenedor-pozo'); cont.style.display = (!modoPreparacion && document.getElementById('pozo').children.length > 0) ? 'block' : 'none'; }
 
         function handlePointerDown(e) {
             const tile = e.target.closest('.ficha'); if (!tile) return;
@@ -477,10 +476,7 @@
             document.body.appendChild(cloneTile); activeTile.style.opacity = '0.3';
         }
 
-        function handlePointerMove(e) {
-            if (!cloneTile) return; e.preventDefault(); 
-            cloneTile.style.left = (e.clientX - offsetX) + 'px'; cloneTile.style.top = (e.clientY - offsetY) + 'px';
-        }
+        function handlePointerMove(e) { if (!cloneTile) return; e.preventDefault(); cloneTile.style.left = (e.clientX - offsetX) + 'px'; cloneTile.style.top = (e.clientY - offsetY) + 'px'; }
 
         function handlePointerUp(e) {
             if (!cloneTile || !activeTile) return;
@@ -489,10 +485,7 @@
 
             if (modoPreparacion) {
                 if (mesaTarget) { mesaTarget.appendChild(activeTile); }
-                else if (manoTarget) {
-                    if (manoTarget.querySelectorAll('.ficha').length >= 7) { alert("Máximo 7 fichas por jugador."); mesaTarget.appendChild(activeTile); }
-                    else { manoTarget.appendChild(activeTile); }
-                }
+                else if (manoTarget) { if (manoTarget.querySelectorAll('.ficha').length >= 7) { alert("Máximo 7 fichas por jugador."); mesaTarget.appendChild(activeTile); } else { manoTarget.appendChild(activeTile); } }
             } else {
                 if (mesaTarget) {
                     if (activeTile.parentElement.id === 'pozo') document.getElementById(ordenJugadores[indiceTurnoActual]).appendChild(activeTile);
@@ -507,9 +500,7 @@
 
                     if (despuesDeElemento == null) manoTarget.appendChild(activeTile); else manoTarget.insertBefore(activeTile, despuesDeElemento);
                     actualizarVisibilidadPozo();
-                    if (juegoIniciado && !juegoTerminado) {
-                        if (!verificarVictoria()) { const jugId = ordenJugadores[indiceTurnoActual]; if (!tieneJugadaValida(jugId)) { autoPase(jugId); } }
-                    }
+                    if (juegoIniciado && !juegoTerminado) { if (!verificarVictoria()) { const jugId = ordenJugadores[indiceTurnoActual]; if (!tieneJugadaValida(jugId)) { autoPase(jugId); } } }
                 }
             }
             cloneTile.remove(); cloneTile = null; if(activeTile) activeTile.style.opacity = '1'; activeTile = null;
@@ -558,9 +549,7 @@
             for (let i = todasLasFichas.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [todasLasFichas[i], todasLasFichas[j]] = [todasLasFichas[j], todasLasFichas[i]]; }
             const manos = { 'mano-sur': todasLasFichas.splice(0, 7), 'mano-este': todasLasFichas.splice(0, 7), 'mano-norte': todasLasFichas.splice(0, 7), 'mano-oeste': todasLasFichas.splice(0, 7) };
             let fIndex = 0; for (let id in manos) { const contenedor = document.getElementById(id); manos[id].forEach((f) => { contenedor.appendChild(crearFichaVisual(f[0], f[1], generarIdFichaOriginal(fIndex++))); }); }
-            
-            indiceTurnoActual = 0; document.getElementById('mano-sur').classList.add('turno-activo');
-            actualizarBotonesControl();
+            indiceTurnoActual = 0; document.getElementById('mano-sur').classList.add('turno-activo'); actualizarBotonesControl();
         }
 
         function iniciarPreparacion() {
@@ -572,130 +561,86 @@
         }
 
         function iniciarEscenarioVisible() {
-            const mesaContainer = document.getElementById('mesa');
-            let restantes = Array.from(mesaContainer.querySelectorAll('.ficha'));
+            const mesaContainer = document.getElementById('mesa'); let restantes = Array.from(mesaContainer.querySelectorAll('.ficha'));
             for (let i = restantes.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [restantes[i], restantes[j]] = [restantes[j], restantes[i]]; }
             let rIndex = 0;
             for (let id of ordenJugadores) {
                 let mano = document.getElementById(id); let currentCount = mano.querySelectorAll('.ficha').length;
-                while (currentCount < 7) {
-                    if (rIndex >= restantes.length) break;
-                    let f = restantes[rIndex++]; mano.appendChild(f); currentCount++;
-                }
+                while (currentCount < 7) { if (rIndex >= restantes.length) break; let f = restantes[rIndex++]; mano.appendChild(f); currentCount++; }
             }
             mesaContainer.innerHTML = '<div id="info-juego">¡Escenario Visible Listo! Salida de Sur.</div>';
-            modoPreparacion = false; juegoIniciado = false; indiceTurnoActual = 0; 
-            toggleModoPrep(false); document.getElementById('mano-sur').classList.add('turno-activo');
-            actualizarBotonesControl();
+            modoPreparacion = false; juegoIniciado = false; indiceTurnoActual = 0; toggleModoPrep(false); document.getElementById('mano-sur').classList.add('turno-activo'); actualizarBotonesControl();
         }
 
         function iniciarEscenarioOculto() {
-            const mesaContainer = document.getElementById('mesa');
-            let restantes = Array.from(mesaContainer.querySelectorAll('.ficha'));
+            const mesaContainer = document.getElementById('mesa'); let restantes = Array.from(mesaContainer.querySelectorAll('.ficha'));
             for (let i = restantes.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [restantes[i], restantes[j]] = [restantes[j], restantes[i]]; }
             let rIndex = 0;
             for (let id of ordenJugadores) {
                 let mano = document.getElementById(id); let currentCount = mano.querySelectorAll('.ficha').length;
-                while (currentCount < 7) {
-                    if (rIndex >= restantes.length) break;
-                    let f = restantes[rIndex++]; f.classList.add('oculta'); mano.appendChild(f); currentCount++;
-                }
+                while (currentCount < 7) { if (rIndex >= restantes.length) break; let f = restantes[rIndex++]; f.classList.add('oculta'); mano.appendChild(f); currentCount++; }
             }
             mesaContainer.innerHTML = '<div id="info-juego">¡Escenario Oculto Listo! Salida de Sur.</div>';
-            modoPreparacion = false; juegoIniciado = false; indiceTurnoActual = 0; 
-            toggleModoPrep(false); document.getElementById('mano-sur').classList.add('turno-activo');
-            actualizarBotonesControl();
+            modoPreparacion = false; juegoIniciado = false; indiceTurnoActual = 0; toggleModoPrep(false); document.getElementById('mano-sur').classList.add('turno-activo'); actualizarBotonesControl();
         }
 
         function iniciarJuegoIncompleto() {
-            const mesaContainer = document.getElementById('mesa');
-            const pozo = document.getElementById('pozo'); pozo.innerHTML = '';
-            mesaContainer.querySelectorAll('.ficha').forEach(f => { pozo.appendChild(f); });
-            actualizarVisibilidadPozo();
-            
+            const mesaContainer = document.getElementById('mesa'); const pozo = document.getElementById('pozo'); pozo.innerHTML = '';
+            mesaContainer.querySelectorAll('.ficha').forEach(f => { pozo.appendChild(f); }); actualizarVisibilidadPozo();
             mesaContainer.innerHTML = '<div id="info-juego">Juego con Info Imperfecta. Salida de Sur.</div>';
-            modoPreparacion = false; juegoIniciado = false; indiceTurnoActual = 0; 
-            toggleModoPrep(false); document.getElementById('mano-sur').classList.add('turno-activo');
-            actualizarBotonesControl();
+            modoPreparacion = false; juegoIniciado = false; indiceTurnoActual = 0; toggleModoPrep(false); document.getElementById('mano-sur').classList.add('turno-activo'); actualizarBotonesControl();
         }
 
         function actualizarBotonesControl() {
             document.getElementById('btn-deshacer').disabled = (historialJugadas.length === 0);
-            if (modoPreparacion) {
-                document.getElementById('btn-simular').disabled = false; 
-                document.getElementById('btn-sugerir').disabled = true;
-                document.getElementById('btn-pasar').disabled = true;
-            } else {
-                let bloqueado = (indiceTurnoActual === -1 && !juegoIniciado) || juegoTerminado;
-                document.getElementById('btn-simular').disabled = bloqueado; 
-                document.getElementById('btn-sugerir').disabled = bloqueado;
-                document.getElementById('btn-pasar').disabled = bloqueado;
-            }
+            if (modoPreparacion) { document.getElementById('btn-simular').disabled = false; document.getElementById('btn-sugerir').disabled = true; document.getElementById('btn-pasar').disabled = true; } 
+            else { let bloqueado = (indiceTurnoActual === -1 && !juegoIniciado) || juegoTerminado; document.getElementById('btn-simular').disabled = bloqueado; document.getElementById('btn-sugerir').disabled = bloqueado; document.getElementById('btn-pasar').disabled = bloqueado; }
+        }
+
+        function cargarEjercicio(nombre, datosGuardados) {
+            pantallaDeInicio(); 
+            juegoIniciado = datosGuardados.juegoIniciado; juegoTerminado = datosGuardados.juegoTerminado; extremoIzquierdo = datosGuardados.extremoIzquierdo; extremoDerecho = datosGuardados.extremoDerecho; indiceTurnoActual = datosGuardados.indiceTurnoActual; pasesConsecutivos = datosGuardados.pasesConsecutivos; puntosNosotros = datosGuardados.puntosNosotros || 0; puntosEllos = datosGuardados.puntosEllos || 0;
+            fichasJugadasPor = datosGuardados.fichasJugadasPor || { 'mano-sur': 0, 'mano-este': 0, 'mano-norte': 0, 'mano-oeste': 0 };
+            historialJugadas = datosGuardados.historial ? JSON.parse(JSON.stringify(datosGuardados.historial)) : [];
+            for (let id in datosGuardados.manos) { let contenedor = document.getElementById(id); datosGuardados.manos[id].forEach(fData => { let ficha = crearFichaVisual(fData.v1, fData.v2, fData.idOriginal); if (fData.oculta) ficha.classList.add('oculta'); contenedor.appendChild(ficha); }); }
+            let contenedorMesa = document.getElementById('mesa'); contenedorMesa.innerHTML = '<div id="info-juego"></div>'; 
+            datosGuardados.mesa.forEach(fData => { let ficha = crearFichaVisual(fData.v1, fData.v2, fData.idOriginal); ficha.draggable = false; ficha.style.cursor = 'default'; if (fData.esDoble) ficha.classList.add('doble'); contenedorMesa.appendChild(ficha); });
+            let pozo = document.getElementById('pozo'); if (datosGuardados.pozo) { datosGuardados.pozo.forEach(fData => { pozo.appendChild(crearFichaVisual(fData.v1, fData.v2, fData.idOriginal)); }); } actualizarVisibilidadPozo();
+            if (juegoIniciado && indiceTurnoActual !== -1 && !juegoTerminado) { document.getElementById(ordenJugadores[indiceTurnoActual]).classList.add('turno-activo'); actualizarMarcador(); } else if (!juegoIniciado && indiceTurnoActual !== -1) { document.getElementById(ordenJugadores[indiceTurnoActual]).classList.add('turno-activo'); actualizarMarcadorInfo(`Manos incompletas`); } else if (juegoTerminado) { actualizarMarcadorInfo(`Terminado`); } else { actualizarMarcadorInfo(`Cargado`); }
+            actualizarTableroPuntos(); actualizarBotonesControl(); document.getElementById('modal-cargar').style.display = 'none';
         }
 
         // =====================================================================
         // IA Y MONTECARLO
         // =====================================================================
-        function obtenerInventarioOculto() {
-            let inv = [];
-            if (modoPreparacion) { document.getElementById('mesa').querySelectorAll('.ficha').forEach(f => inv.push({ v1: parseInt(f.dataset.v1), v2: parseInt(f.dataset.v2) })); } 
-            else { document.getElementById('pozo').querySelectorAll('.ficha').forEach(f => inv.push({ v1: parseInt(f.dataset.v1), v2: parseInt(f.dataset.v2) })); }
-            return inv;
-        }
-
-        function extraerManosActuales() {
-            let manosBases = [[], [], [], []];
-            ordenJugadores.forEach((id, idx) => { document.getElementById(id).querySelectorAll('.ficha').forEach(f => { manosBases[idx].push({ v1: parseInt(f.dataset.v1), v2: parseInt(f.dataset.v2) }); }); });
-            return manosBases;
-        }
+        function obtenerInventarioOculto() { let inv = []; if (modoPreparacion) { document.getElementById('mesa').querySelectorAll('.ficha').forEach(f => inv.push({ v1: parseInt(f.dataset.v1), v2: parseInt(f.dataset.v2) })); } else { document.getElementById('pozo').querySelectorAll('.ficha').forEach(f => inv.push({ v1: parseInt(f.dataset.v1), v2: parseInt(f.dataset.v2) })); } return inv; }
+        function extraerManosActuales() { let manosBases = [[], [], [], []]; ordenJugadores.forEach((id, idx) => { document.getElementById(id).querySelectorAll('.ficha').forEach(f => { manosBases[idx].push({ v1: parseInt(f.dataset.v1), v2: parseInt(f.dataset.v2) }); }); }); return manosBases; }
 
         function correrSimulacionCore(manosIniciales, extIzqInicial, extDerInicial, turnoInicial, pasesIniciales, iteraciones, inventarioDisp) {
-            let victoriasUs = 0; let victoriasThem = 0; let empates = 0;
-            let fJugadasSim = [...Object.values(fichasJugadasPor)];
-
+            let victoriasUs = 0; let victoriasThem = 0; let empates = 0; let fJugadasSim = [...Object.values(fichasJugadasPor)];
             for (let i = 0; i < iteraciones; i++) {
                 let extIzq = extIzqInicial; let extDer = extDerInicial; let turnoAct = turnoInicial; let pases = pasesIniciales;
                 let manosSim = [ [...manosIniciales[0]], [...manosIniciales[1]], [...manosIniciales[2]], [...manosIniciales[3]] ];
                 let jugadasBaseSim = [...fJugadasSim];
-                
                 if (inventarioDisp && inventarioDisp.length > 0) {
                     let mezclado = [...inventarioDisp];
                     for (let j = mezclado.length - 1; j > 0; j--) { const k = Math.floor(Math.random() * (j + 1)); [mezclado[j], mezclado[k]] = [mezclado[k], mezclado[j]]; }
                     let idxMezcla = 0;
-                    for (let p = 0; p < 4; p++) {
-                        let fichasQueDeberiaTener = 7 - jugadasBaseSim[p];
-                        while (manosSim[p].length < fichasQueDeberiaTener && idxMezcla < mezclado.length) { manosSim[p].push(mezclado[idxMezcla++]); }
-                    }
+                    for (let p = 0; p < 4; p++) { let fichasQueDeberiaTener = 7 - jugadasBaseSim[p]; while (manosSim[p].length < fichasQueDeberiaTener && idxMezcla < mezclado.length) { manosSim[p].push(mezclado[idxMezcla++]); } }
                 }
-
                 let simTerminada = false;
                 while (!simTerminada) {
                     let manoJugador = manosSim[turnoAct]; let jugadasValidas = [];
-                    if (extIzq === null && extDer === null) {
-                        for (let f = 0; f < manoJugador.length; f++) { jugadasValidas.push({ index: f, lado: 'inicio', f: manoJugador[f] }); }
-                    } else {
-                        for (let f = 0; f < manoJugador.length; f++) {
-                            let ficha = manoJugador[f];
-                            if (ficha.v1 === extIzq || ficha.v2 === extIzq) jugadasValidas.push({ index: f, lado: 'izq', f: ficha });
-                            if (ficha.v1 === extDer || ficha.v2 === extDer) jugadasValidas.push({ index: f, lado: 'der', f: ficha });
-                        }
-                    }
-
+                    if (extIzq === null && extDer === null) { for (let f = 0; f < manoJugador.length; f++) { jugadasValidas.push({ index: f, lado: 'inicio', f: manoJugador[f] }); } } 
+                    else { for (let f = 0; f < manoJugador.length; f++) { let ficha = manoJugador[f]; if (ficha.v1 === extIzq || ficha.v2 === extIzq) jugadasValidas.push({ index: f, lado: 'izq', f: ficha }); if (ficha.v1 === extDer || ficha.v2 === extDer) jugadasValidas.push({ index: f, lado: 'der', f: ficha }); } }
                     if (jugadasValidas.length > 0) {
-                        pases = 0; let elegida = jugadasValidas[Math.floor(Math.random() * jugadasValidas.length)];
-                        manosSim[turnoAct].splice(elegida.index, 1);
-                        jugadasBaseSim[turnoAct]++; 
+                        pases = 0; let elegida = jugadasValidas[Math.floor(Math.random() * jugadasValidas.length)]; manosSim[turnoAct].splice(elegida.index, 1); jugadasBaseSim[turnoAct]++; 
                         if (jugadasBaseSim[turnoAct] === 7) { if (turnoAct === 0 || turnoAct === 2) victoriasUs++; else victoriasThem++; simTerminada = true; break; }
-                        if (elegida.lado === 'inicio') { extIzq = elegida.f.v1; extDer = elegida.f.v2; }
-                        else if (elegida.lado === 'izq') { extIzq = (elegida.f.v1 === extIzq) ? elegida.f.v2 : elegida.f.v1; } 
-                        else { extDer = (elegida.f.v2 === extDer) ? elegida.f.v1 : elegida.f.v2; }
+                        if (elegida.lado === 'inicio') { extIzq = elegida.f.v1; extDer = elegida.f.v2; } else if (elegida.lado === 'izq') { extIzq = (elegida.f.v1 === extIzq) ? elegida.f.v2 : elegida.f.v1; } else { extDer = (elegida.f.v2 === extDer) ? elegida.f.v1 : elegida.f.v2; }
                     } else {
-                        pases++;
-                        if (pases >= 4) {
-                            let ptsUs = manosSim[0].reduce((s, f) => s + f.v1 + f.v2, 0) + manosSim[2].reduce((s, f) => s + f.v1 + f.v2, 0);
-                            let ptsThem = manosSim[1].reduce((s, f) => s + f.v1 + f.v2, 0) + manosSim[3].reduce((s, f) => s + f.v1 + f.v2, 0);
-                            if (ptsUs < ptsThem) victoriasUs++; else if (ptsThem < ptsUs) victoriasThem++; else empates++;
-                            simTerminada = true; break;
+                        pases++; if (pases >= 4) {
+                            let ptsUs = manosSim[0].reduce((s, f) => s + f.v1 + f.v2, 0) + manosSim[2].reduce((s, f) => s + f.v1 + f.v2, 0); let ptsThem = manosSim[1].reduce((s, f) => s + f.v1 + f.v2, 0) + manosSim[3].reduce((s, f) => s + f.v1 + f.v2, 0);
+                            if (ptsUs < ptsThem) victoriasUs++; else if (ptsThem < ptsUs) victoriasThem++; else empates++; simTerminada = true; break;
                         }
                     }
                     turnoAct = (turnoAct + 1) % 4; 
@@ -705,63 +650,36 @@
         }
 
         function ejecutarSimulacionMonteCarlo() {
-            if ((indiceTurnoActual === -1 && !juegoIniciado) || juegoTerminado) return;
-            document.getElementById('info-juego').innerText = "🔮 Analizando Multiversos...";
-            
+            if ((indiceTurnoActual === -1 && !juegoIniciado) || juegoTerminado) return; document.getElementById('info-juego').innerText = "🔮 Analizando Multiversos...";
             setTimeout(() => {
                 const ITERACIONES = 5000; let manosBases = extraerManosActuales(); let inv = obtenerInventarioOculto();
                 let turnoInicial = modoPreparacion ? 0 : indiceTurnoActual; let extIzqInicial = modoPreparacion ? null : extremoIzquierdo; let extDerInicial = modoPreparacion ? null : extremoDerecho; let pasesIniciales = modoPreparacion ? 0 : pasesConsecutivos;
                 let res = correrSimulacionCore(manosBases, extIzqInicial, extDerInicial, turnoInicial, pasesIniciales, ITERACIONES, inv);
                 let pctUs = ((res.victoriasUs / ITERACIONES) * 100).toFixed(1); let pctThem = ((res.victoriasThem / ITERACIONES) * 100).toFixed(1); let pctEmpates = ((res.empates / ITERACIONES) * 100).toFixed(1);
                 document.getElementById('sim-nosotros').innerText = pctUs; document.getElementById('sim-ellos').innerText = pctThem; document.getElementById('sim-empates').innerText = pctEmpates;
-                let barraHTML = "";
-                if(pctUs > 0) barraHTML += `<div class="barra-nosotros" style="width:${pctUs}%;">${pctUs}%</div>`;
-                if(pctThem > 0) barraHTML += `<div class="barra-ellos" style="width:${pctThem}%;">${pctThem}%</div>`;
-                if(pctEmpates > 0) barraHTML += `<div class="barra-empate" style="width:${pctEmpates}%;"></div>`;
-                document.getElementById('barra-visual').innerHTML = barraHTML; document.getElementById('modal-simulacion').style.display = 'flex';
+                let barraHTML = ""; if(pctUs > 0) barraHTML += `<div class="barra-nosotros" style="width:${pctUs}%;">${pctUs}%</div>`; if(pctThem > 0) barraHTML += `<div class="barra-ellos" style="width:${pctThem}%;">${pctThem}%</div>`; if(pctEmpates > 0) barraHTML += `<div class="barra-empate" style="width:${pctEmpates}%;"></div>`; document.getElementById('barra-visual').innerHTML = barraHTML; document.getElementById('modal-simulacion').style.display = 'flex';
                 if (modoPreparacion) actualizarMarcadorInfo("🛠️ Inventario: Asigna fichas"); else if (!juegoIniciado) actualizarMarcadorInfo("Juego Incompleto. Salida de Sur."); else actualizarMarcador();
             }, 50);
         }
 
         function sugerirMejorJugada() {
             if ((indiceTurnoActual === -1 && !juegoIniciado) || juegoTerminado) return; limpiarSugerencias();
-            let manosBases = extraerManosActuales(); let manoJugador = manosBases[indiceTurnoActual]; let jugadasValidas = [];
-            let domFichas = document.getElementById(ordenJugadores[indiceTurnoActual]).querySelectorAll('.ficha');
-            let inv = obtenerInventarioOculto();
-
-            if (extremoIzquierdo === null && extremoDerecho === null) {
-                for (let i = 0; i < manoJugador.length; i++) { jugadasValidas.push({ index: i, lado: 'inicio', f: manoJugador[i], id: domFichas[i].id }); }
-            } else {
-                for (let i = 0; i < manoJugador.length; i++) {
-                    let ficha = manoJugador[i]; let domId = domFichas[i].id;
-                    if (ficha.v1 === extremoIzquierdo || ficha.v2 === extremoIzquierdo) jugadasValidas.push({ index: i, lado: 'izq', f: ficha, id: domId });
-                    if (ficha.v1 === extremoDerecho || ficha.v2 === extremoDerecho) jugadasValidas.push({ index: i, lado: 'der', f: ficha, id: domId });
-                }
-            }
-
+            let manosBases = extraerManosActuales(); let manoJugador = manosBases[indiceTurnoActual]; let jugadasValidas = []; let domFichas = document.getElementById(ordenJugadores[indiceTurnoActual]).querySelectorAll('.ficha'); let inv = obtenerInventarioOculto();
+            if (extremoIzquierdo === null && extremoDerecho === null) { for (let i = 0; i < manoJugador.length; i++) { jugadasValidas.push({ index: i, lado: 'inicio', f: manoJugador[i], id: domFichas[i].id }); } } 
+            else { for (let i = 0; i < manoJugador.length; i++) { let ficha = manoJugador[i]; let domId = domFichas[i].id; if (ficha.v1 === extremoIzquierdo || ficha.v2 === extremoIzquierdo) jugadasValidas.push({ index: i, lado: 'izq', f: ficha, id: domId }); if (ficha.v1 === extremoDerecho || ficha.v2 === extremoDerecho) jugadasValidas.push({ index: i, lado: 'der', f: ficha, id: domId }); } }
             if (jugadasValidas.length === 0) { alert("No tienes jugadas válidas en tus fichas VISIBLES. Arrastra una desde las Desconocidas."); return; }
             if (jugadasValidas.length === 1) { document.getElementById(jugadasValidas[0].id).classList.add('ficha-sugerida'); actualizarMarcadorInfo(`💡 Única jugada visible posible`); return; }
-
             actualizarMarcadorInfo("🤖 Calculando...");
             setTimeout(() => {
                 let mejorJugada = null; let mejorProbabilidad = -1;
                 for (let jugada of jugadasValidas) {
-                    let manosSim = [ [...manosBases[0]], [...manosBases[1]], [...manosBases[2]], [...manosBases[3]] ];
-                    manosSim[indiceTurnoActual].splice(jugada.index, 1);
+                    let manosSim = [ [...manosBases[0]], [...manosBases[1]], [...manosBases[2]], [...manosBases[3]] ]; manosSim[indiceTurnoActual].splice(jugada.index, 1);
                     let extIzqSim = extremoIzquierdo; let extDerSim = extremoDerecho;
-                    if (jugada.lado === 'inicio') { extIzqSim = jugada.f.v1; extDerSim = jugada.f.v2; }
-                    else if (jugada.lado === 'izq') { extIzqSim = (jugada.f.v1 === extremoIzquierdo) ? jugada.f.v2 : jugada.f.v1; }
-                    else { extDerSim = (jugada.f.v2 === extremoDerecho) ? jugada.f.v1 : extDerSim = jugada.f.v2; }
-                    let nextTurno = (indiceTurnoActual + 1) % 4;
-                    let res = correrSimulacionCore(manosSim, extIzqSim, extDerSim, nextTurno, 0, 2000, inv);
-                    let probWin = (indiceTurnoActual === 0 || indiceTurnoActual === 2) ? (res.victoriasUs / 2000) : (res.victoriasThem / 2000);
-                    if (probWin > mejorProbabilidad) { mejorProbabilidad = probWin; mejorJugada = jugada; }
+                    if (jugada.lado === 'inicio') { extIzqSim = jugada.f.v1; extDerSim = jugada.f.v2; } else if (jugada.lado === 'izq') { extIzqSim = (jugada.f.v1 === extremoIzquierdo) ? jugada.f.v2 : jugada.f.v1; } else { extDerSim = (jugada.f.v2 === extremoDerecho) ? jugada.f.v1 : extDerSim = jugada.f.v2; }
+                    let nextTurno = (indiceTurnoActual + 1) % 4; let res = correrSimulacionCore(manosSim, extIzqSim, extDerSim, nextTurno, 0, 2000, inv);
+                    let probWin = (indiceTurnoActual === 0 || indiceTurnoActual === 2) ? (res.victoriasUs / 2000) : (res.victoriasThem / 2000); if (probWin > mejorProbabilidad) { mejorProbabilidad = probWin; mejorJugada = jugada; }
                 }
-                if (mejorJugada) {
-                    document.getElementById(mejorJugada.id).classList.add('ficha-sugerida');
-                    let probPct = (mejorProbabilidad * 100).toFixed(1);
-                    actualizarMarcadorInfo(`💡 Juega [${mejorJugada.f.v1}|${mejorJugada.f.v2}] (${probPct}% éxito)`);
-                }
+                if (mejorJugada) { document.getElementById(mejorJugada.id).classList.add('ficha-sugerida'); let probPct = (mejorProbabilidad * 100).toFixed(1); actualizarMarcadorInfo(`💡 Juega [${mejorJugada.f.v1}|${mejorJugada.f.v2}] (${probPct}% éxito)`); }
             }, 50);
         }
 
@@ -774,22 +692,17 @@
         function sumarPuntosDeMano(idMano) { let t = 0; document.getElementById(idMano).querySelectorAll('.ficha').forEach(f => { t += parseInt(f.dataset.v1) + parseInt(f.dataset.v2); }); return t; }
 
         function resolverTranca() {
-            juegoTerminado = true; let pNos = sumarPuntosDeMano('mano-sur') + sumarPuntosDeMano('mano-norte'), pEllos = sumarPuntosDeMano('mano-este') + sumarPuntosDeMano('mano-oeste');
-            let pPozo = 0; document.getElementById('pozo').querySelectorAll('.ficha').forEach(f => { pPozo += parseInt(f.dataset.v1) + parseInt(f.dataset.v2); });
+            juegoTerminado = true; let pNos = sumarPuntosDeMano('mano-sur') + sumarPuntosDeMano('mano-norte'), pEllos = sumarPuntosDeMano('mano-este') + sumarPuntosDeMano('mano-oeste'); let pPozo = 0; document.getElementById('pozo').querySelectorAll('.ficha').forEach(f => { pPozo += parseInt(f.dataset.v1) + parseInt(f.dataset.v2); });
             let msg = `TRANCA<br>S-N: ${pNos} | E-O: ${pEllos}<br>`;
-            if (pNos < pEllos) { puntosNosotros += (pEllos + Math.round(pPozo*0.66)); msg += "<span style='color:lime;'>Ganamos</span>"; } 
-            else if (pEllos < pNos) { puntosEllos += (pNos + Math.round(pPozo*0.66)); msg += "<span style='color:red;'>Ganaron</span>"; } 
-            else { msg += "<span style='color:gold;'>Empate</span>"; }
+            if (pNos < pEllos) { puntosNosotros += (pEllos + Math.round(pPozo*0.66)); msg += "<span style='color:lime;'>Ganamos</span>"; } else if (pEllos < pNos) { puntosEllos += (pNos + Math.round(pPozo*0.66)); msg += "<span style='color:red;'>Ganaron</span>"; } else { msg += "<span style='color:gold;'>Empate</span>"; }
             actualizarMarcadorInfo(msg); actualizarTableroPuntos(); ordenJugadores.forEach(id => document.getElementById(id).classList.remove('turno-activo')); actualizarBotonesControl();
         }
 
         function verificarVictoria() {
             for (let id of ordenJugadores) {
                 if (fichasJugadasPor[id] === 7) {
-                    juegoTerminado = true; let pGanados = 0;
-                    let pPozo = 0; document.getElementById('pozo').querySelectorAll('.ficha').forEach(f => { pPozo += parseInt(f.dataset.v1) + parseInt(f.dataset.v2); });
-                    if (id === 'mano-sur' || id === 'mano-norte') { pGanados = sumarPuntosDeMano('mano-este') + sumarPuntosDeMano('mano-oeste') + Math.round(pPozo*0.66); puntosNosotros += pGanados; } 
-                    else { pGanados = sumarPuntosDeMano('mano-sur') + sumarPuntosDeMano('mano-norte') + Math.round(pPozo*0.66); puntosEllos += pGanados; }
+                    juegoTerminado = true; let pGanados = 0; let pPozo = 0; document.getElementById('pozo').querySelectorAll('.ficha').forEach(f => { pPozo += parseInt(f.dataset.v1) + parseInt(f.dataset.v2); });
+                    if (id === 'mano-sur' || id === 'mano-norte') { pGanados = sumarPuntosDeMano('mano-este') + sumarPuntosDeMano('mano-oeste') + Math.round(pPozo*0.66); puntosNosotros += pGanados; } else { pGanados = sumarPuntosDeMano('mano-sur') + sumarPuntosDeMano('mano-norte') + Math.round(pPozo*0.66); puntosEllos += pGanados; }
                     actualizarMarcadorInfo(`DOMINÓ! Ganó ${id.replace('mano-', '')}`); actualizarTableroPuntos(); ordenJugadores.forEach(i => document.getElementById(i).classList.remove('turno-activo')); actualizarBotonesControl(); return true;
                 }
             } return false;
@@ -797,44 +710,27 @@
 
         function registrarHistorial(ficha, origen, estabaOculta) { historialJugadas.push({ esPase: false, idFicha: ficha.id, origen: origen, prevOculta: estabaOculta, prevV1: ficha.dataset.v1, prevV2: ficha.dataset.v2, prevIzq: extremoIzquierdo, prevDer: extremoDerecho, prevTurno: indiceTurnoActual, prevIniciado: juegoIniciado, prevPases: pasesConsecutivos }); actualizarBotonesControl(); }
         
-        function forzarPase() {
-            if ((indiceTurnoActual === -1 && !juegoIniciado) || juegoTerminado || modoPreparacion) return;
-            historialJugadas.push({ esPase: true, prevTurno: indiceTurnoActual, prevPases: pasesConsecutivos, prevIzq: extremoIzquierdo, prevDer: extremoDerecho, prevIniciado: juegoIniciado });
-            pasesConsecutivos++; avanzarTurno(true); 
-        }
+        function forzarPase() { if ((indiceTurnoActual === -1 && !juegoIniciado) || juegoTerminado || modoPreparacion) return; historialJugadas.push({ esPase: true, prevTurno: indiceTurnoActual, prevPases: pasesConsecutivos, prevIzq: extremoIzquierdo, prevDer: extremoDerecho, prevIniciado: juegoIniciado }); pasesConsecutivos++; avanzarTurno(true); }
 
         function intentarJugarFicha(elementoFicha, ladoElegido = null) {
             if (juegoTerminado || modoPreparacion) return; 
-            let manoPadreId = elementoFicha.parentElement.id;
-            let estabaOculta = elementoFicha.classList.contains('oculta');
-            
+            let manoPadreId = elementoFicha.parentElement.id; let estabaOculta = elementoFicha.classList.contains('oculta');
             if (!juegoIniciado && manoPadreId !== 'mano-sur') { alert("Por regla del laboratorio, el SUR siempre realiza la salida."); return; }
-
             elementoFicha.classList.remove('oculta');
             if (juegoIniciado && manoPadreId !== ordenJugadores[indiceTurnoActual]) { alert("Esa ficha no es del jugador actual."); if (estabaOculta) elementoFicha.classList.add('oculta'); return; }
             let v1 = parseInt(elementoFicha.dataset.v1), v2 = parseInt(elementoFicha.dataset.v2);
-            
-            if (!juegoIniciado) { 
-                limpiarSugerencias(); registrarHistorial(elementoFicha, manoPadreId, estabaOculta); fichasJugadasPor[manoPadreId]++;
-                ejecutarJugadaFisica(elementoFicha, 'inicio', v1, v2); juegoIniciado = true; 
-                indiceTurnoActual = 0; avanzarTurno(); return; 
-            }
-            
+            if (!juegoIniciado) { limpiarSugerencias(); registrarHistorial(elementoFicha, manoPadreId, estabaOculta); fichasJugadasPor[manoPadreId]++; ejecutarJugadaFisica(elementoFicha, 'inicio', v1, v2); juegoIniciado = true; indiceTurnoActual = 0; avanzarTurno(); return; }
             let calzaIzq = (v1 === extremoIzquierdo || v2 === extremoIzquierdo), calzaDer = (v1 === extremoDerecho || v2 === extremoDerecho);
             if (!calzaIzq && !calzaDer) { if (estabaOculta) elementoFicha.classList.add('oculta'); return; }
             if (calzaIzq && calzaDer && ladoElegido === null) { fichaEnEspera = elementoFicha; document.getElementById('modal-decision').style.display = 'flex'; return; }
-            
             limpiarSugerencias(); registrarHistorial(elementoFicha, manoPadreId, estabaOculta); fichasJugadasPor[manoPadreId]++;
             if (ladoElegido) ejecutarJugadaFisica(elementoFicha, ladoElegido, v1, v2); else if (calzaIzq) ejecutarJugadaFisica(elementoFicha, 'izq', v1, v2); else if (calzaDer) ejecutarJugadaFisica(elementoFicha, 'der', v1, v2);
-            
             avanzarTurno();
         }
 
         function ejecutarJugadaFisica(elementoFicha, lado, v1, v2) {
             elementoFicha.draggable = false; elementoFicha.style.cursor = 'default'; let necesitaVoltearse = false, agregarAlInicio = false;
-            if (lado === 'inicio') { extremoIzquierdo = v1; extremoDerecho = v2; } 
-            else if (lado === 'izq') { agregarAlInicio = true; if (v1 === extremoIzquierdo) { necesitaVoltearse = true; extremoIzquierdo = v2; } else extremoIzquierdo = v1; } 
-            else if (lado === 'der') { agregarAlInicio = false; if (v2 === extremoDerecho) { necesitaVoltearse = true; extremoDerecho = v1; } else extremoDerecho = v2; }
+            if (lado === 'inicio') { extremoIzquierdo = v1; extremoDerecho = v2; } else if (lado === 'izq') { agregarAlInicio = true; if (v1 === extremoIzquierdo) { necesitaVoltearse = true; extremoIzquierdo = v2; } else extremoIzquierdo = v1; } else if (lado === 'der') { agregarAlInicio = false; if (v2 === extremoDerecho) { necesitaVoltearse = true; extremoDerecho = v1; } else extremoDerecho = v2; }
             if (v1 === v2) elementoFicha.classList.add('doble');
             if (necesitaVoltearse) { elementoFicha.dataset.v1 = v2; elementoFicha.dataset.v2 = v1; dibujarMitad(elementoFicha.querySelector('.m1'), v2); dibujarMitad(elementoFicha.querySelector('.m2'), v1); }
             const mesa = document.getElementById('mesa');
@@ -845,73 +741,38 @@
         function deshacerJugada() {
             if (historialJugadas.length === 0) return; limpiarSugerencias(); let jugada = historialJugadas.pop();
             extremoIzquierdo = jugada.prevIzq; extremoDerecho = jugada.prevDer; indiceTurnoActual = jugada.prevTurno; juegoIniciado = jugada.prevIniciado; pasesConsecutivos = jugada.prevPases; juegoTerminado = false;
-            
-            if (jugada.esPase) {
-                ordenJugadores.forEach(id => document.getElementById(id).classList.remove('turno-activo'));
-                document.getElementById(ordenJugadores[indiceTurnoActual]).classList.add('turno-activo'); 
-                actualizarBotonesControl(); actualizarMarcador(); return;
-            }
-
+            if (jugada.esPase) { ordenJugadores.forEach(id => document.getElementById(id).classList.remove('turno-activo')); document.getElementById(ordenJugadores[indiceTurnoActual]).classList.add('turno-activo'); actualizarBotonesControl(); actualizarMarcador(); return; }
             let ficha = document.getElementById(jugada.idFicha); ficha.draggable = true; ficha.style.cursor = 'grab'; ficha.style.margin = '0'; ficha.classList.remove('doble');
             if (jugada.prevOculta) ficha.classList.add('oculta'); else ficha.classList.remove('oculta');
-            ficha.dataset.v1 = jugada.prevV1; ficha.dataset.v2 = jugada.prevV2;
-            dibujarMitad(ficha.querySelector('.m1'), parseInt(jugada.prevV1)); dibujarMitad(ficha.querySelector('.m2'), parseInt(jugada.prevV2));
-            document.getElementById(jugada.origen).appendChild(ficha);
-            
-            fichasJugadasPor[jugada.origen]--; 
-            
-            ordenJugadores.forEach(id => document.getElementById(id).classList.remove('turno-activo'));
-            actualizarBotonesControl(); actualizarVisibilidadPozo();
+            ficha.dataset.v1 = jugada.prevV1; ficha.dataset.v2 = jugada.prevV2; dibujarMitad(ficha.querySelector('.m1'), parseInt(jugada.prevV1)); dibujarMitad(ficha.querySelector('.m2'), parseInt(jugada.prevV2));
+            document.getElementById(jugada.origen).appendChild(ficha); fichasJugadasPor[jugada.origen]--; 
+            ordenJugadores.forEach(id => document.getElementById(id).classList.remove('turno-activo')); actualizarBotonesControl(); actualizarVisibilidadPozo();
             if (juegoIniciado && indiceTurnoActual !== -1) { document.getElementById(ordenJugadores[indiceTurnoActual]).classList.add('turno-activo'); actualizarMarcador(); } else { actualizarMarcadorInfo("Inicio"); }
         }
 
-        function reiniciarManoActual() {
-            if (historialJugadas.length === 0) return;
-            if (confirm("¿Reiniciar esta misma mano desde el principio?")) { while (historialJugadas.length > 0) deshacerJugada(); }
-        }
+        function reiniciarManoActual() { if (historialJugadas.length === 0) return; if (confirm("¿Reiniciar esta misma mano desde el principio?")) { while (historialJugadas.length > 0) deshacerJugada(); } }
 
-        function autoPase(jugadorId) {
-            pasesConsecutivos++; 
-            setTimeout(() => { 
-                alert(`Jugador ${jugadorId.replace('mano-', '')} pasa. (Sin opciones visibles)`); 
-                historialJugadas.push({ esPase: true, prevTurno: indiceTurnoActual, prevPases: pasesConsecutivos - 1, prevIzq: extremoIzquierdo, prevDer: extremoDerecho, prevIniciado: juegoIniciado });
-                avanzarTurno(true); 
-            }, 500); 
-        }
+        function autoPase(jugadorId) { pasesConsecutivos++; setTimeout(() => { alert(`Jugador ${jugadorId.replace('mano-', '')} pasa. (Sin opciones visibles)`); historialJugadas.push({ esPase: true, prevTurno: indiceTurnoActual, prevPases: pasesConsecutivos - 1, prevIzq: extremoIzquierdo, prevDer: extremoDerecho, prevIniciado: juegoIniciado }); avanzarTurno(true); }, 500); }
 
         function avanzarTurno(esPaseManual = false) {
-            actualizarBotonesControl();
-            if (verificarVictoria()) return; if (pasesConsecutivos >= 4) { resolverTranca(); return; }
+            actualizarBotonesControl(); if (verificarVictoria()) return; if (pasesConsecutivos >= 4) { resolverTranca(); return; }
             if (!esPaseManual) pasesConsecutivos = 0;
-
             ordenJugadores.forEach(id => document.getElementById(id).classList.remove('turno-activo'));
-            indiceTurnoActual = (indiceTurnoActual + 1) % 4; const nuevoTurnoId = ordenJugadores[indiceTurnoActual];
-            document.getElementById(nuevoTurnoId).classList.add('turno-activo'); actualizarMarcador();
-            
-            let pozoVacio = document.getElementById('pozo').children.length === 0;
-            if (pozoVacio && !tieneJugadaValida(nuevoTurnoId)) { autoPase(nuevoTurnoId); }
+            indiceTurnoActual = (indiceTurnoActual + 1) % 4; const nuevoTurnoId = ordenJugadores[indiceTurnoActual]; document.getElementById(nuevoTurnoId).classList.add('turno-activo'); actualizarMarcador();
+            let pozoVacio = document.getElementById('pozo').children.length === 0; if (pozoVacio && !tieneJugadaValida(nuevoTurnoId)) { autoPase(nuevoTurnoId); }
         }
 
         function tieneJugadaValida(idMano) {
-            const fichas = document.getElementById(idMano).querySelectorAll('.ficha');
-            if (fichas.length === 0) return false;
+            const fichas = document.getElementById(idMano).querySelectorAll('.ficha'); if (fichas.length === 0) return false;
             for (let f of fichas) { let v1 = parseInt(f.dataset.v1), v2 = parseInt(f.dataset.v2); if (v1 === extremoIzquierdo || v2 === extremoIzquierdo || v1 === extremoDerecho || v2 === extremoDerecho) return true; } 
-            let pozoVacio = document.getElementById('pozo').children.length === 0;
-            if (!pozoVacio && fichasJugadasPor[idMano] < 7) return true; 
-            return false;
+            let pozoVacio = document.getElementById('pozo').children.length === 0; if (!pozoVacio && fichasJugadasPor[idMano] < 7) return true; return false;
         }
 
-        function dibujarMitad(contenedor, valor) {
-            contenedor.innerHTML = ''; const puntos = posicionesPuntos[valor];
-            for (let i = 0; i < 9; i++) { const celda = document.createElement('div'); if (puntos.includes(i)) { const p = document.createElement('div'); p.className = 'punto'; celda.appendChild(p); } contenedor.appendChild(celda); }
-        }
+        function dibujarMitad(contenedor, valor) { contenedor.innerHTML = ''; const puntos = posicionesPuntos[valor]; for (let i = 0; i < 9; i++) { const celda = document.createElement('div'); if (puntos.includes(i)) { const p = document.createElement('div'); p.className = 'punto'; celda.appendChild(p); } contenedor.appendChild(celda); } }
 
         function crearFichaVisual(arriba, abajo, idUnico) {
-            const ficha = document.createElement('div'); ficha.className = 'ficha'; ficha.id = idUnico;
-            ficha.dataset.v1 = arriba; ficha.dataset.v2 = abajo;
-            const m1 = document.createElement('div'); m1.className = 'mitad m1'; dibujarMitad(m1, arriba);
-            const linea = document.createElement('div'); linea.className = 'linea-divisoria';
-            const m2 = document.createElement('div'); m2.className = 'mitad m2'; dibujarMitad(m2, abajo);
+            const ficha = document.createElement('div'); ficha.className = 'ficha'; ficha.id = idUnico; ficha.dataset.v1 = arriba; ficha.dataset.v2 = abajo;
+            const m1 = document.createElement('div'); m1.className = 'mitad m1'; dibujarMitad(m1, arriba); const linea = document.createElement('div'); linea.className = 'linea-divisoria'; const m2 = document.createElement('div'); m2.className = 'mitad m2'; dibujarMitad(m2, abajo);
             ficha.appendChild(m1); ficha.appendChild(linea); ficha.appendChild(m2); return ficha;
         }
 
@@ -923,7 +784,9 @@
         function generarIdFichaOriginal(i) { return `f_${i}_${Math.random().toString(36).substr(2, 9)}`; }
         function reiniciarPartidaCompleta() { if (confirm("¿Borrar puntos globales?")) { puntosNosotros = 0; puntosEllos = 0; actualizarTableroPuntos(); pantallaDeInicio(); } }
 
-        pantallaDeInicio();
+        // Inicialización
+        verificarSesion();
+        if (usuarioActual) { pantallaDeInicio(); }
 
     </script>
 </body>
